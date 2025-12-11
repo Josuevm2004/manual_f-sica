@@ -1,0 +1,31 @@
+\documentclass[12pt,oneside]{book}
+\input{lib}
+
+\begin{document}
+\input{caratula}
+
+\newpage
+\pagestyle{fancy}
+\tableofcontents
+\newpage
+
+\chapter{Google Earth Engine en Acción: Procesamiento y Análisis de Imágenes Satelitales en la Nube}
+\input{GEE_intro}
+\input{GEE_cap}
+\input{GEE_pro}
+
+\chapter{Earth Explorer en Práctica: Descarga y Preprocesamiento de Datos Satelitales USGS}
+\input{USGS_intro}
+\input{USGS_fundamentos}
+\input{USGS_preparacion}
+\input{USGS_adquisicion}
+\input{USGS_lima}
+\input{USGS_titicaca}
+\input{USGS_procesamiento_titicaca}
+\input{USGS_presentacion_titicaca}
+
+
+\newgeometry{left=0mm, right=0mm, top=0mm, bottom=0mm, margin=0mm}
+\pagestyle{empty}
+\noindent\includegraphics[width=\paperwidth, height=\paperheight]{resources/trasero.pdf}
+\end{document}
