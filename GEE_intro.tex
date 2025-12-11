@@ -1,0 +1,333 @@
+
+\section{Introducción a la Teledetección Satelital}
+\section{Propósito y alcance del manual}
+Este manual tiene como objetivo principal proporcionar una guía integral sobre las técnicas de descarga y procesamiento de imágenes satelitales para investigación científica. Está diseñado para servir como referencia tanto para investigadores experimentados como para aquellos que se inician en el campo de la teledetección.
+
+\begin{summary}{Metodologías estandarizadas aplicables a múltiples disciplinas}{green!60!blue}
+    Monitoreo de temperatura superficial terrestre\\
+    Análisis de criósfera y deshielo\\
+    Evaluación de cobertura forestal y bosques\\
+    Estudios agrícolas y de uso de suelo\\
+    Investigación urbana y ambiental
+\end{summary}
+
+\section{Fundamentos físicos de la teledetección}
+La teledetección se basa en la medición de la energía electromagnética interactuando con la superficie terrestre. Los principios físicos fundamentales incluyen:
+
+\subsection{Interacción radiación-materia}
+Los tres procesos fundamentales son:
+
+\begin{platform}
+\begin{center}
+\begin{tabular}{p{0.35\textwidth}| p{0.6\textwidth}}
+\textbf{Reflectancia} & Porcentaje de energía que rebota en la superficie \\ \hline
+\textbf{Absorción} & Energía retenida por los materiales \\ \hline
+\textbf{Transmitancia} & Energía que atraviesa los materiales \\
+\end{tabular}
+\end{center}
+\end{platform}
+
+\subsection{Espectro electromagnético}
+Las regiones espectrales utilizadas en teledetección incluyen: 
+
+\begin{platform}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth} p{0.25\textwidth} p{0.4\textwidth}}
+\textbf{Región} & \textbf{Rango} & \textbf{Aplicaciones principales} \\
+\hline
+Visible & 400-700 nm & Color natural, vegetación, agua \\
+Infrarrojo cercano & 700-1300 nm & Salud vegetal, biomasa \\
+Infrarrojo onda corta & 1300-3000 nm & Minerales, humedad del suelo \\
+Infrarrojo térmico & 8000-14000 nm & Temperatura superficial \\
+Microondas & 1 mm-1 m & Nubes, lluvia, topografía \\
+\end{tabular}
+\end{center}
+\end{platform}
+
+
+\subsection{Leyes fundamentales}
+\begin{platform}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth}| p{0.65\textwidth}}
+\textbf{Ley de Planck} & Describe la radiación emitida por cuerpos negros \\ \hline
+\textbf{Ley de Stefan-Boltzmann} & Relaciona la temperatura con la energía radiante emitida \\ \hline
+\textbf{Ley de Wien} & Establece la relación entre temperatura y longitud de onda de máxima emisión \\
+\end{tabular}
+\end{center}
+\end{platform}
+
+\subsection{Ecuaciones fundamentales}
+
+\begin{summary}{Ley de Planck}{cyan!50!blue}
+\begin{equation}
+B_\lambda(T) = \frac{2hc^2}{\lambda^5} \frac{1}{e^{\frac{hc}{\lambda kT}} - 1}
+\end{equation}
+donde $B_\lambda(T)$ es la radiancia espectral, $h$ es la constante de Planck, $c$ es la velocidad de la luz, $\lambda$ es la longitud de onda, $k$ es la constante de Boltzmann y $T$ es la temperatura absoluta.
+\end{summary}
+
+\begin{summary}{Ley de Stefan-Boltzmann}{cyan!50!blue}
+\begin{equation}
+M = \sigma T^4
+\end{equation}
+donde $M$ es la energía total emitida por unidad de área, $\sigma$ es la constante de Stefan-Boltzmann ($5.67 \times 10^{-8} \, \text{W m}^{-2} \text{K}^{-4}$) y $T$ es la temperatura absoluta.
+\end{summary}
+
+\begin{summary}{Ley de Wien}{cyan!50!blue}
+\begin{equation}
+\lambda_{max} = \frac{b}{T}
+\end{equation}
+donde $\lambda_{max}$ es la longitud de onda de máxima emisión, $b$ es la constante de Wien ($2898 \, \mu\text{m K}$) y $T$ es la temperatura absoluta.
+\end{summary}
+
+\section{Resoluciones en teledetección}
+
+\subsection{Resolución espacial}
+Define el tamaño del pixel y la capacidad de distinguir objetos:
+
+\begin{resolution}
+\begin{center}
+\begin{tabular}{p{0.45\textwidth}| p{0.5\textwidth}}
+\textbf{Alta resolución} (< 5 m)& Ve árboles individuales, edificios\\ \hline
+\textbf{Media resolución} (5-100 m)& Ideal para cultivos, bosques\\ \hline
+\textbf{Baja resolución} (> 100 m)& Para océanos, clima global
+\end{tabular}
+\end{center}
+\end{resolution}
+
+
+\subsection{Resolución espectral}
+Número y ancho de bandas espectrales
+
+\begin{resolution}
+\begin{center}
+\begin{tabular}{p{0.45\textwidth}| p{0.5\textwidth}}
+\textbf{Multiespectral} (3-15 bandas)& Como tener ojos con superpoderes\\ \hline
+\textbf{Hiperespectral} (>100 bandas)& Como tener un microscopio desde el espacio
+\end{tabular}
+\end{center}
+\end{resolution}
+
+\subsection{Resolución temporal}
+Frecuencia de revisita del satélite:
+\begin{resolution}
+\begin{center}
+\begin{tabular}{p{0.2\textwidth}| p{0.75\textwidth}}
+\textbf{MODIS}& Todos los días - para cambios rápidos\\ \hline
+\textbf{VIIRS}& 2 veces al día (mañana y noche) – monitoreo diario de media resolución\\ \hline
+\textbf{Sentinel-2}& Cada 5 días - balance ideal\\ \hline
+\textbf{Landsat}& Cada 16 días - para estudios a largo plazo
+\end{tabular}
+\end{center}
+\end{resolution}
+
+\subsection{Resolución radiométrica}
+Capacidad de distinguir niveles de intensidad:
+\begin{resolution}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth}| p{0.65\textwidth}}
+\textbf{8-bit} (256 niveles)& Suficiente para visualización\\ \hline
+\textbf{12-bit} (4096 niveles)& Buena precisión para análisis técnicos y productos intermedios\\ \hline
+\textbf{16-bit} (65,536 niveles)& Necesario para investigación científica
+\end{tabular}
+\end{center}
+\end{resolution}
+
+\section{Plataformas satelitales principales}
+
+\subsection{Serie Landsat (NASA/USGS)}
+\begin{future}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth}| p{0.65\textwidth}}
+    \textbf{Landsat 5-9}& Proporcionan datos desde 1984 hasta la actualidad\\ \hline
+    \textbf{Resolución espacial}& 15-30 metros (dependiendo de la banda)\\ \hline
+    \textbf{Resolución temporal}& 16 días\\ \hline
+    \textbf{Aplicaciones}& Uso de suelo, vegetación, temperatura superficial
+\end{tabular}
+\end{center}    
+\end{future}
+
+\subsection{Sentinel (Programa Copernicus/ESA)}
+\begin{future}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth}| p{0.65\textwidth}}
+    \textbf{Sentinel-2}& Imágenes multiespectrales de alta resolución\\ \hline
+    \textbf{Sentinel-3}& Mediciones oceánicas y terrestres\\ \hline
+    \textbf{Resolución espacial}& 10-60 metros\\ \hline
+    \textbf{Resolución temporal}& 5-10 días
+\end{tabular}
+\end{center}    
+\end{future}
+
+\subsection{MODIS (NASA)}
+\subsection{Sentinel (Programa Copernicus/ESA)}
+\begin{future}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth}| p{0.65\textwidth}}
+    \textbf{Terra/Aqua}& Cobertura global diaria\\ \hline
+    \textbf{Resolución espacial}& 250-1000 metros\\ \hline
+    \textbf{Aplicaciones}& Monitoreo global, series temporales largas
+\end{tabular}
+\end{center}    
+\end{future}
+
+\subsection{Google Earth Engine}
+\subsection{Sentinel (Programa Copernicus/ESA)}
+\begin{future}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth}| p{0.65\textwidth}}
+    \textbf{Plataforma}& Computación en la nube para análisis geoespacial\\ \hline
+    \textbf{Catálogo}& Incluye múltiples fuentes de datos satelitales\\ \hline
+    \textbf{Procesamiento}& Análisis a escala planetaria\\ \hline
+    \textbf{Aplicaciones}& Investigación académica, monitoreo ambiental\\ \hline
+    \textbf{Ventajas}& Acceso a petabytes de datos, procesamiento paralelo
+\end{tabular}
+\end{center}    
+\end{future}
+
+\subsection{OTRAS PLATAFORMAS IMPORTANTES}
+\subsection{Sentinel (Programa Copernicus/ESA)}
+\begin{future}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth}| p{0.65\textwidth}}
+    \textbf{GOES/R}& Observación atmosférica y climática\\ \hline
+    \textbf{ICESat-2}& Altimetría láser para hielo y topografía\\ \hline
+    \textbf{GRACE}& Mediciones gravimétricas para agua subterránea\\ \hline
+    \textbf{SMAP}& Humedad del suelo activa/pasiva\\ \hline
+    \textbf{Ven$\mu$s}& Monitoreo de vegetación
+\end{tabular}
+\end{center}    
+\end{future}
+
+\section{Google Earth y Google Earth Pro}
+
+\subsection{Características principales}
+
+\begin{platform}
+\begin{center}
+\begin{tabular}{p{0.3\textwidth} p{0.25\textwidth} p{0.4\textwidth}}
+\textbf{Característica} & \textbf{Google Earth} & \textbf{Google Earth Pro} \\
+\hline
+Plataforma & Navegador web & Aplicación desktop \\
+Imágenes históricas & Acceso limitado & Archivo temporal completo \\
+Herramientas medición & Distancia simple & Área, perímetro, 3D \\
+Exportación & Resolución estándar & Hasta 4800px \\
+Licencia & Uso personal & Uso comercial \\
+Disponibilidad & Gratuita & Gratuita \\
+\end{tabular}
+\end{center}
+\end{platform}
+
+\subsection{Aplicaciones en investigación}
+\begin{platform}
+\begin{center}
+\begin{tabular}{p{0.35\textwidth} p{0.6\textwidth}}
+\textbf{Tipo de aplicación} & \textbf{Utilidad en investigación} \\
+\hline
+Visualización preliminar & Reconocimiento rápido del área de estudio \\
+Análisis temporal & Comparación de cambios a través del tiempo \\
+Georreferenciación & Establecer puntos de control en terreno \\
+Planificación de campo & Identificar sitios de muestreo óptimos \\
+Comunicación & Presentar resultados de forma visual \\
+\hline
+\end{tabular}
+\end{center}
+\end{platform}
+
+\subsection{Limitaciones y consideraciones}
+\begin{platform}
+\begin{center}
+\begin{tabular}{p{0.35\textwidth} p{0.6\textwidth}}
+\textbf{Limitaciones} & \textbf{Impacto en la investigación} \\
+\hline
+Fecha de imagen & No siempre actualizada \\
+Resolución variable & Depende de la ubicación \\
+Metadatos limitados & Información de adquisición restringida \\
+Uso comercial & Restricciones en la licencia \\
+\hline
+\end{tabular}
+\end{center}
+\end{platform}
+
+
+\section{Aplicaciones comunes en investigación}
+
+\subsection{Medición de temperatura}
+\begin{example}
+
+    Monitoreo de islas de calor urbanas\\
+    Estudios de cambio climático\\
+    Detección de anomalías térmicas
+    \\Agricultura de precisión
+    \\Monitoreo volcánico y de incendios
+
+\end{example}
+
+
+\subsection{Análisis de deshielo}
+\begin{example}
+    Monitoreo glaciar y criósfera
+    \\Mediciones de balance de masa
+    \\Estudio del permafrost
+    \\Impacto del cambio climático en regiones polares
+    \\Nivología y dinámica de nieve
+\end{example}
+
+\subsection{Evaluación de bosques}
+\begin{example}
+    Monitoreo de deforestación y degradación
+    \\Salud vegetal y estrés hídrico
+    \\Estimación de biomasa y carbono
+    \\Estudios de biodiversidad
+    \\Manejo forestal sostenible
+\end{example}
+
+\subsection{Hidrología y recursos hídricos}
+\begin{example}
+    Monitoreo de cuerpos de agua
+    \\Detección de inundaciones
+    \\Calidad del agua
+    \\Humedad del suelo
+    \\Evapotranspiración
+\end{example}
+
+\subsection{Oceanografía y costas}
+\begin{example}
+    Temperatura superficial del mar
+    \\Clorofila y productividad primaria
+    \\Monitoreo de mareas negras
+    \\Cambio en línea de costa
+    \\Arrecifes de coral
+\end{example}
+
+\section{Consideraciones importantes en teledetección}
+
+\subsection{Factores atmosféricos}
+\begin{platform}
+    Dispersión de Rayleigh y Mie
+    \\Absorción por gases atmosféricos
+    \\Efecto de nubes y aerosol
+    \\Correcciones atmosféricas necesarias
+\end{platform}
+
+\subsection{Limitaciones y desafíos}
+\begin{platform}
+    Cobertura nubosa persistente
+    \\Resoluciones espaciales vs. temporales
+    \\Acceso y procesamiento de grandes volúmenes de datos
+    \\Validación con datos in situ
+    \\Costos de datos de alta resolución
+\end{platform}
+
+\subsection{Tendencias futuras}
+\begin{platform}
+    Constelaciones de pequeños satélites
+    \\Inteligencia artificial y machine learning
+    \\Datos de código abierto y cloud computing
+    \\Integración con IoT y sensores in situ
+    \\Teledetección hiperespectral comercial
+    \\Plataformas integradas como Google Earth Engine
+\end{platform}
+
+\begin{summary}{Resumen del capítulo}{purple!40!blue}
+Este capítulo establece las bases conceptuales y técnicas necesarias para comprender los procedimientos detallados en los capítulos subsiguientes, garantizando una comprensión sólida de los principios que rigen la teledetección moderna. El conocimiento de estos fundamentos es esencial para la correcta aplicación de las metodologías de procesamiento que se presentarán en los siguientes capítulos, incluyendo el uso de herramientas como Google Earth Engine para el análisis a gran escala.
+\end{summary}

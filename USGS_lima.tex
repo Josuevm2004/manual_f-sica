@@ -1,0 +1,637 @@
+\subsection{Adquisición y Procesamiento de Datos Satelitales: Caso Lima Metropolitana}
+\subsubsection{Definir área de estudio}		
+
+\begin{example}
+En la pestaña \textbf{Search Criteria} (Criterios de Búsqueda), defina su área de estudio. Puede hacerlo de dos formas:
+\begin{itemize}
+\item \textbf{Mapa:} Haga clic directamente sobre el mapa para crear un polígono alrededor de su zona de interés.
+\item \textbf{Coordenadas:} Ingrese un archivo KML/Shapefile si dispone de él.
+\item (Opcional) En la sección "Date Range", filtre por fechas (ej. meses de verano para estudios de LST sin nubes).
+\end{itemize}
+\end{example}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+\centering
+\includegraphics[width=0.85\linewidth]{Jaime_caps/Rango_de_fechas.png}
+\captionof{figure}{Rango de fechas}
+\end{imagenbox}
+\end{figure}
+
+	
+\begin{tcolorbox}[colback=blue!5, colframe=blue!60!black, title={Selección del Conjunto de Datos (Data Sets}]
+Este es el paso crítico para asegurar la calidad de los datos mencionada en el Capítulo 2.1.
+	\begin{enumerate}
+		\item Haga clic en el botón \textbf{Data Sets (Conjunto de datos)} en la parte inferior o superior de la interfaz.
+		\item Navegue a través del árbol de directorios siguiendo esta ruta específica para obtener datos "Listos para el Análisis" (ARD):
+		\begin{quote}
+			\textbf{Landsat} $\rightarrow$ \textbf{Landsat Collection 2 Level-2} $\rightarrow$ \textbf{Landsat 8-9 OLI/TIRS C2 L2}.
+		\end{quote}
+		\item Marque la casilla de verificación correspondiente.
+	\end{enumerate}  
+\end{tcolorbox}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{Jaime_caps/Árbol_de_directorios.png}
+    \captionof{figure}{Árbol de directorios}
+\end{imagenbox}
+\end{figure}
+    
+\begin{tcolorbox}[colback=blue!5, colframe=blue!60!black, title={Filtrado y Descarga}]
+Una vez seleccionada la colección, procedemos a visualizar la disponibilidad.
+	\begin{enumerate}
+	    \item (Opcional) En la pestaña \textbf{Additional Criteria o criterios adicionales seleccionados}, establezca el filtro "Land Cloud Cover" a menos del 10\% o 20\% para evitar imágenes inservibles.
+		\item Haga clic en el botón azul \textbf{Results}.
+		\item Aparecerá una lista de imágenes disponibles. Utilice el icono del "pie" (Footprint) para ver la cobertura sobre el mapa.
+  \end{enumerate}
+\end{tcolorbox}
+
+    \begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.85\linewidth]{Jaime_caps/Imágenes_disponibles.png}
+        \captionof{figure}{Imágenes disponibles}
+    \end{imagenbox}
+    \end{figure}
+
+\begin{resolution}
+  \begin{enumerate}
+      \item Haga clic en el icono de \textbf{Download Options u opciones de desacrga} (símbolo de disco/flecha verde).
+		\item \textbf{Importante:} Despliegue las opciones de "Product Options" o "Opciones de producto" y descargue el paquete completo (generalmente etiquetado como \textit{SP Product Bundle}) o las bandas individuales si solo requiere la banda termal y los metadatos (MTL.txt). 
+  \end{enumerate}		
+\end{resolution}
+
+    \begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.85\linewidth]{Jaime_caps/Descarga_imágenes.png}
+        \captionof{figure}{Descarga de imágenes}
+    \end{imagenbox}
+    \end{figure}
+ 
+\subsubsection{Descarga de datos EPW desde EnergyPlus y uso de UMEP en QGIS}
+ \begin{resolution}
+    	En este apartado se explicará cómo descargar un archivo meteorológico EPW desde el enlace proporcionado de EnergyPlus y cómo importarlo en UMEP dentro de QGIS.
+ \end{resolution}
+ 
+	\begin{tcolorbox}[colback=blue!5, colframe=blue!60!black, title={Paso 1: Descargar la data desde EnergyPlus}]
+     A continuación se incluyen espacios designados para que pueda subir capturas de pantalla de la página de EnergyPlus. Sustituya cada bloque \texttt{imagen\_*.png} con el nombre real de sus imágenes.
+    	Acceda al enlace:\\
+    	\url{https://energyplus.net/weather-location/south_america\_wmo\_region\_3/PER/PER\_Cuzco.846860\_IWEC}\\[4pt]
+    	En la página (ver Figura 2.5):\
+    \end{tcolorbox}
+
+	    \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{aweleros/energyplus.jpeg}
+            \captionof{figure}{Descarga de imágenes}
+        \end{imagenbox}
+        \end{figure}
+	
+	\begin{resolution}
+ 	En la página:
+	\begin{enumerate}
+		\item Busque el botón \textbf{Download Weather File (EPW)}.
+		\item Haga clic en él para descargar el archivo correspondiente, por ejemplo: \
+		\texttt{PER\_Cuzco\_846860\_IWEC.epw}
+		\item Guarde el archivo en su computadora (recomendado: carpeta dedicada, por ejemplo: \
+		\texttt{C:/EPW/Cuzco/}).
+	\end{enumerate}
+	\end{resolution}
+
+	
+	\begin{tcolorbox}[colback=blue!5, colframe=blue!60!black, title={Paso 2: Uso básico del archivo EPW importado}]
+	Una vez importado el archivo EPW:
+		\\ Puede usar las herramientas climáticas de UMEP: temperatura, viento, radiación, balances energéticos.
+		\\ Puede crear grillas: \textbf{UMEP → Pre-processor → Grid creation}.
+		\\ Puede generar mapas raster climáticos listos para exportar.
+     \end{tcolorbox}
+
+	\begin{tcolorbox}[colback=blue!5, colframe=blue!60!black, title={Paso 3: Exportar mapas como imágenes}]
+	\begin{enumerate}
+		\item Abra: Proyecto → Nuevo diseño de impresión.
+		\item Inserte un mapa desde \textbf{Insertar → Mapa}.
+		\item Ajuste leyenda, escala y título.
+		\item Exporte con \textbf{Diseño → Exportar como imagen }(PNG, TIFF, JPEG).
+	\end{enumerate}
+    \end{tcolorbox}
+		
+\subsubsection{Obtención y recorte de límites distritales}
+
+\begin{resolution}
+Descargar la cartografía base del Perú desde GADM y generar un archivo Shapefile individual de un distrito específico utilizando QGIS.
+\end{resolution}
+
+
+\subsubsection{Fase 1: Descarga de Datos (GADM)}
+\begin{example}
+\begin{enumerate}
+\item \textbf{Acceso al portal:}
+Ingrese a la web oficial: \url{https://gadm.org/data.html}
+\item \textbf{Búsqueda del país:}
+Haga clic en el botón o enlace \textbf{"Country"}.
+\end{enumerate}
+\end{example}
+
+    \begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.75\linewidth]{Recorte/img1.png}
+        \captionof{figure}{}
+    \end{imagenbox}
+    \end{figure}	
+	
+\begin{example}
+En el listado desplegable, seleccione \textbf{Peru}.
+\end{example}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{Recorte/img2.png}
+    \captionof{figure}{}
+\end{imagenbox}
+\end{figure}
+
+\begin{example}
+\begin{enumerate}
+\item \textbf{Descarga del archivo:} Localice la opción marcada como \textbf{"Shapefile"}.
+\end{enumerate}		
+\end{example}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{Recorte/img3.png}
+    \captionof{figure}{}
+\end{imagenbox}
+\end{figure}
+
+\begin{example}
+Haga clic en el enlace \texttt{gadm41\_PER\_shp.zip} para iniciar la descarga.
+\end{example}
+
+\begin{example}
+\begin{enumerate}
+    		\item \textbf{Descompresión y selección del archivo:}
+\end{enumerate}
+			Descomprima el archivo \texttt{.zip} descargado.
+			\\ Identifique el archivo con terminación \textbf{\texttt{\_3.shp}} (Ejemplo: \texttt{gadm41\_PER\_3.shp}).
+			\\ \textit{Nota: El nivel 3 corresponde a la división distrital.}
+\end{example}
+	\subsubsection{Fase 2: Extracción del Distrito en QGIS}
+
+    \begin{summary}{Paso 1: Carga de datos}{green!60!blue}
+	\begin{enumerate}
+		\item Abra \textbf{QGIS}.
+		\item Arrastre el archivo \texttt{gadm41\_PER\_3.shp} hacia el panel de capas o el lienzo del mapa.
+	\end{enumerate}
+ 	\end{summary}
+
+    \begin{summary}{Paso 2: Selección del Distrito}{green!60!blue}
+	Para evitar errores manuales, se utilizará una selección por atributos.
+	
+	\begin{enumerate}
+		\item Haga clic derecho sobre la capa \texttt{gadm41\_PER\_3} y seleccione \textbf{Abrir tabla de atributos}.
+		\item En la barra de herramientas superior de la tabla, haga clic en el icono \textbf{Seleccionar objetos espaciales usando una expresión} (Icono con símbolo $\varepsilon$ sobre un cuadrado amarillo).
+		\item En el editor de expresiones, escriba la siguiente fórmula (respetando comillas):
+		\begin{quote}
+			\texttt{``NAME3'' = ``Nombre\_De\_Tu\_Distrito''}
+		\end{quote}
+		\textit{(Reemplace 'Nombre\_De\_Tu\_Distrito' por el nombre real, por ejemplo: 'Mancora' o 'Piura').}
+		\item Haga clic en el botón \textbf{Seleccionar objetos espaciales} y cierre la ventana.
+		\begin{itemize}
+			\item \textit{Verificación:} El distrito seleccionado aparecerá resaltado en color amarillo en el mapa.
+		\end{itemize}
+	\end{enumerate}
+  	\end{summary}
+
+    \begin{summary}{Paso 3: Exportación (Crear el nuevo Shapefile}{green!60!blue}
+	Este paso guarda únicamente el distrito seleccionado en un archivo nuevo e independiente.
+	
+	\begin{enumerate}
+		\item En el panel de capas, haga \textbf{clic derecho} sobre la capa \texttt{gadm41\_PER\_3}.
+		\item Diríjase a \textbf{Exportar} $>$ \textbf{Guardar objetos seleccionados como...}
+		\begin{itemize}
+			\item \textit{Importante: Asegúrese de elegir la opción "objetos seleccionados", no "guardar objetos como".}
+		\end{itemize}
+		\item Configure el cuadro de diálogo:
+		\begin{itemize}
+			\item \textbf{Formato:} Archivo Shape de ESRI.
+			\item \textbf{Nombre de archivo:} Haga clic en \texttt{...} para elegir la ruta y el nombre (ej: \texttt{Distrito\_Estudio.shp}).
+			\item \textbf{SRC:} Se recomienda mantener el original o cambiar a la zona UTM correspondiente (ej: EPSG:32717).
+		\end{itemize}
+		\item Haga clic en \textbf{Aceptar}.
+	\end{enumerate}
+   	\end{summary}
+
+\begin{consideration}
+    \paragraph{Resultado}
+	Se cargará automáticamente una nueva capa que contiene exclusivamente la silueta de su distrito de interés. Ya puede eliminar la capa general del Perú.
+\end{consideration}
+
+     \begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.85\linewidth]{Recorte/img4.png}
+        \caption{}{}
+    \end{imagenbox}
+    \end{figure}
+	
+\begin{resolution}
+\textbf{Sistemas de Coordenadas (Peligro)}\\
+		Para calcular distancias y sombras correctamente, tus imágenes \textbf{deben} estar en un sistema proyectado (en metros, como UTM), NO en grados (Latitud/Longitud).
+		\textbf{Verificación:} Mira la esquina inferior derecha de QGIS. Si ves "EPSG:4326", estás en grados (malo para SEBE). Debes reproyectar tus datos a un sistema UTM local (ej. EPSG:32718 para partes de Perú/Sudamérica o el que corresponda a tu zona).
+  	\textbf{Obtención del Modelo Digital de Superficie (DSM) de Lima Metropolitana}\\
+	
+	Para realizar el modelado solar con UMEP–SEBE es necesario contar con un \textbf{Modelo Digital de Superficie (DSM)}. A continuación se presenta un tutorial para descargar el DSM de Lima Metropolitana utilizando la plataforma \textit{OpenTopography}.
+\end{resolution}
+
+
+    \begin{summary}{Paso 1: Entrar a OpenTopography}{purple!40!blue}
+	Ingrese a la página principal:
+	\begin{center}
+		\url{https://opentopography.org/}
+  	\end{center}
+  \end{summary}
+  
+    \begin{figure}[H]
+    		\centering
+    		\fbox{\includegraphics[width=1\linewidth]{MANCOOOOO/pagina.jpeg}}
+    		\caption{}
+    		\label{fig:pagina}
+    \end{figure}
+    \begin{resolution}
+        	En el menú superior seleccione: \textbf{Data} $\rightarrow$ \textbf{Global Datasets}
+    \end{resolution}
+
+ 	\begin{figure}[H]
+		\centering
+		\fbox{\includegraphics[width=1\linewidth]{MANCOOOOO/data_map.png}}
+		\captionof{figure}{}
+		\label{fig:datamap}
+	\end{figure}
+ 	
+
+
+	
+\begin{summary}{Paso 2: Delimitar la región en el mapa (opción recomendada)}{purple!40!blue}
+	Al ingresar al dataset, se muestra un visor donde puede seleccionar directamente el área de interés.  
+	Para Lima Metropolitana:
+	
+	\begin{itemize}
+		\item Acérquese en el mapa hasta la costa central del Perú.
+		\item Mantenga presionado el cursor y dibuje un rectángulo encima de Lima.
+		\item El sistema automáticamente detectará qué tiles del DSM están dentro del rectángulo.
+	\end{itemize} 
+        Esta es la forma más fácil para no descargar archivos innecesarios.
+  	\end{summary}
+
+    \begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.85\linewidth]{MANCOOOOO/select.png}
+        \caption{}{}
+    \end{imagenbox}
+    \end{figure}
+
+\begin{summary}{Paso 3: Acceder al dataset ALOS World 3D – 30 m}{purple!40!blue}
+	
+	Si desea revisar o descargar manualmente los archivos del modelo ALOS World 3D (AW3D30), puede hacerlo directamente desde el catálogo de datasets globales de OpenTopography.
+	
+		\url{https://portal.opentopography.org/datasetMetadata?otCollectionID=OT.112016.4326.2}
+
+	Una vez dentro:
+	
+	\begin{enumerate}
+		\item Seleccione la pestaña \textbf{Global \& Regional DEM}.
+		\item En la lista de datasets, busque \textbf{ALOS World 3D – 30m}.
+		\item Haga clic en el botón \textbf{"Get AW3D30 Data"} para acceder al panel de descarga.
+	\end{enumerate}
+	
+	Este dataset se distribuye en bloques (tiles) que cubren aproximadamente \textbf{1° x 1°}. Al entrar al panel de descarga, podrá visualizar cada tile en el mapa y seleccionar manualmente solo las zonas que necesite.
+	
+	Los archivos descargados tendrán un formato similar a:
+	
+	\begin{verbatim}
+		AW3D30_XXXXXX_DSM.tif
+	\end{verbatim}
+	
+	Cada archivo representa un Modelo Digital Superficial (DSM) con resolución espacial de 30 metros.
+\end{summary}
+\begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{MANCOOOOO/ALOS.jpeg}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+
+
+\begin{summary}{Paso 4: Buscar los archivos necesarios}{purple!40!blue}
+	El navegador del bucket no tiene buscador, pero puede usar:
+	
+	\begin{itemize}
+		\item La búsqueda del navegador (\texttt{Ctrl + F}) para localizar códigos como:
+		\begin{itemize}
+			\item \texttt{S012}, \texttt{S011}, \texttt{S010} (latitudes negativas)
+			\item \texttt{W076}, \texttt{W077} (longitudes oeste de Lima)
+		\end{itemize}
+		\item El visor del Paso 2, que recomienda automáticamente los tiles correctos.
+	\end{itemize}
+ 	Una vez identificado el archivo, selecciónelo y haga clic en: \textbf{Download object} 
+ \end{summary}
+
+\begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.85\linewidth]{MANCOOOOO/77-78.png}
+        \captionof{figure}{}
+    \end{imagenbox}
+    \end{figure}
+
+
+	\newpage
+ \begin{summary}{Paso 5: Verificar y preparar en QGIS}{purple!40!blue}
+	Con los archivos descargados:
+	
+	\begin{itemize}
+		\item Ábralos en QGIS para confirmar que cubren Lima.		
+	\end{itemize}
+  \end{summary}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{MANCOOOOO/QGIS.png}
+            \captionof{figure}{Modelo Digital de Superficie}
+        \end{imagenbox}
+        \end{figure}
+\begin{resolution}
+\begin{itemize}
+  	\item Si son varios tiles, únalos con \texttt{Raster → Miscellaneous → Merge}.
+		\item Reproyecte el DSM a \texttt{EPSG:32718} (UTM Zona 18S).
+		\item Recorte el mosaico al límite distrital o provincial según su necesidad.
+		\end{itemize}
+\end{resolution}
+
+ \begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{Recorte/img5.png}
+    \captionof{figure}{Ejemplo de DMS de Lima metropolitana}
+\end{imagenbox}
+\end{figure}
+
+\begin{law}
+	Luego de estos pasos, el DSM está listo para utilizarse en el modelo SEBE.
+\end{law}
+	
+\subsubsection{Ejecutando el Procesador SEBE}
+
+\begin{law}
+	Ahora que tenemos un DSM (edificios) y un archivo meteorológico, ejecutemos el modelo.\\
+	
+	\textbf{Paso 1: Abrir SEBE}\\
+	1. En la caja de herramientas de UMEP (o en el panel lateral de Procesos), busca:
+	\textbf{UMEP}.
+\end{law}
+
+ 
+    \begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.85\linewidth]{SEBE/SEBE1.png}
+        \captionof{figure}{Desplegar la opción de UMEP}
+    \end{imagenbox}
+    \end{figure}
+
+\begin{law}
+	\textbf{UMEP > Processor > Solar Radiation > SEBE (Solar Energy on Building Envelopes)}.
+\end{law}
+
+    \begin{figure}[H]
+    \centering
+    \begin{imagenbox}
+        \centering
+        \includegraphics[width=0.85\linewidth]{SEBE/SEBE2.png}
+        \captionof{figure}{}
+    \end{imagenbox}
+    \end{figure}
+
+\begin{law}
+\textbf{Paso 2: Configuración de Parámetros}\\
+	Se abrirá una ventana. Rellena los campos de la siguiente manera:
+	
+	\begin{enumerate}
+		\item \textbf{Building and Ground DSM:} Selecciona tu capa raster de alturas (DSM).
+  \end{enumerate}
+\end{law}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE3.png}
+            \captionof{figure}{Interfaz de configuración del procesador \textbf{SEBE (Solar Energy on Building Envelopes)} en el entorno de QGIS/UMEP}
+        \end{imagenbox}
+        \end{figure}
+
+\begin{law}
+    \begin{enumerate}
+        		\item \textbf{Wall aspect and height:} (Opcional al inicio). Si lo dejas vacío, SEBE lo calculará automáticamente a partir del DSM.
+    \end{enumerate}
+\end{law}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE4.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+		
+\begin{law}
+    \begin{enumerate}
+    		\item \textbf{Meteorological File:} Carga el archivo de texto (.txt) que descargaste o generaste con datos climáticos.
+    \end{enumerate}
+\end{law}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE5.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+		
+\begin{law}
+    \begin{enumerate}
+        \item \textbf{UTC Offset:} Ajusta la zona horaria según la ubicación de tus datos (ej. -5 para Perú/Colombia).
+		\item \textbf{Output folder:} Selecciona dónde guardar los resultados.
+    \end{enumerate}
+\end{law}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE6.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+        
+\begin{law}
+    \textbf{Paso 3: Ejecución e Interpretación}
+	Haz clic en \textbf{Run}. Dependiendo del tamaño de tu imagen, esto puede tardar unos minutos.
+\end{law}
+	
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE7.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+\begin{law}
+    Al finalizar, obtendrás varios archivos raster (imágenes):
+	\begin{itemize}
+		\item \texttt{YearIrradiance.tif}: Muestra la energía total (kWh/m$^2$) acumulada en el año.
+		\item Mapas de sombras (si seleccionaste esa opción).
+	\end{itemize}
+\end{law}
+
+\subsubsection{Visualización de Resultados}
+
+\begin{law}
+    Una imagen en escala de grises es difícil de interpretar. Apliquemos estilo científico.\\
+	1. Haz clic derecho sobre la capa \texttt{YearIrradiance} generada > \textbf{Propiedades}.\\
+\end{law}
+	
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE8.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+	
+\begin{law}
+    2. Ve a la pestaña \textbf{Simbología}.\\
+	3. En "Tipo de renderizador", elige \textbf{Pseudocolor monobanda}.
+\end{law}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE9.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+\begin{law}
+    	4. Selecciona una rampa de color (ej. "Spectral" o "Magma").
+\end{law}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE10.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+        
+\begin{law}
+    	5. Haz clic en \textbf{Aceptar}.\\
+	¡Felicidades! Ahora deberías ver los techos de los edificios coloreados según su potencial solar: rojo para alta energía, azul para zonas en sombra.
+\end{law}
+
+        \begin{figure}[H]
+        \centering
+        \begin{imagenbox}
+            \centering
+            \includegraphics[width=0.85\linewidth]{SEBE/SEBE11.png}
+            \captionof{figure}{}
+        \end{imagenbox}
+        \end{figure}
+	
+	\subsubsection{Aplicaciones de los Resultados de SEBE}
+ \begin{law}
+     	\label{sec:aplicaciones}
+		Los mapas de irradiancia generados por el procesador SEBE tienen múltiples aplicaciones prácticas en planificación urbana y gestión energética:
+ \end{law}
+	
+	\textbf{Planificación Urbana Sostenible}
+	\begin{warning}
+		\textbf{Orientación óptima de edificios:} Identificar las orientaciones que maximizan la captación solar para nuevas construcciones.
+		\\ \textbf{Densificación inteligente:} Evaluar el impacto de nuevos edificios sobre el potencial solar de construcciones existentes.
+		\\ \textbf{Corredores solares:} Diseñar espacios públicos que aprovechen al máximo la radiación solar.
+	\end{warning}
+	
+	\textbf{Energías Renovables}
+	\begin{warning}
+		\textbf{Instalación de paneles solares:} Identificar techos con mayor potencial para instalaciones fotovoltaicas.
+		\\ \textbf{Estimación de producción energética:} Calcular la energía generable por sistemas solares en diferentes zonas urbanas.
+		\\ \textbf{Planificación de redes de distribución:} Optimizar la ubicación de generadores distribuidos en la ciudad.
+	\end{warning}
+	
+	\textbf{Eficiencia Energética Edificatoria}
+	\begin{warning}
+		\textbf{Diseño bioclimático:} Optimizar la relación entre ganancia solar y pérdidas térmicas en edificios.
+		\\ \textbf{Iluminación natural:} Identificar zonas que requieren estrategias específicas de iluminación natural.
+		\\ \textbf{Confort térmico:} Evaluar el impacto solar en el comportamiento térmico de fachadas y espacios urbanos.
+	\end{warning}
+	
+	\textbf{Investigación Científica}
+	\begin{warning}
+		\textbf{Modelos microclimáticos:} Integrar datos de irradiancia en modelos de clima urbano.
+		\\ \textbf{Estudios de cambio climático:} Evaluar la resiliencia solar de diferentes morfologías urbanas.
+		\\ \textbf{Desarrollo metodológico:} Mejorar algoritmos de cálculo de radiación en entornos complejos.
+	\end{warning}
+
+    \begin{summary}{Análisis Cuantitativo}{yellow!10!red}
+		Los resultados de SEBE pueden exportarse a herramientas como Excel o R para realizar análisis estadísticos avanzados: cálculo de percentiles, correlaciones con variables socioeconómicas, y proyecciones temporales de producción energética.
+	\end{summary}
+	
+	\section{Conclusión}
+	
+	
+	\begin{law}
+ \label{sec:conclusion}
+	
+	Este manual ha guiado al usuario a través del proceso completo de modelado de energía solar en entornos urbanos utilizando herramientas de código abierto. Desde la instalación del software hasta la interpretación de resultados, se han cubierto los aspectos fundamentales para:\\
+		\textbf{Adquirir y preparar datos} espaciales de calidad, incluyendo Modelos Digitales de Superficie y datos meteorológicos.
+		\\textbf{Configurar y ejecutar} el procesador SEBE dentro del ecosistema QGIS-UMEP.
+		\\ \textbf{Visualizar y analizar} los mapas de irradiancia resultantes mediante técnicas cartográficas profesionales.\\
+  \\La metodología presentada demuestra que es posible realizar análisis sofisticados de potencial solar urbano sin recurrir a software comercial costoso, democratizando así el acceso a herramientas avanzadas de planificación sostenible. Como señalan \textcite{lillesand2015}, la calidad de los resultados depende críticamente de la calidad de los datos de entrada, por lo que se recomienda siempre utilizar las mejores fuentes disponibles y validar los resultados con mediciones in situ cuando sea posible.\\
+  \\El flujo de trabajo descrito constituye una base sólida para investigaciones más avanzadas en el campo de la energía solar urbana, pudiendo extenderse mediante:
+  \begin{enumerate}
+      \item Integración con modelos de demanda energética edificatoria.
+      \item Análisis económicos de viabilidad de instalaciones solares.
+      \item Evaluación de escenarios futuros considerando cambio climático y crecimiento urbano.
+  \end{enumerate}
+  	La replicabilidad de este método en diferentes contextos urbanos lo convierte en una valiosa herramienta para investigadores, planificadores y urbanistas comprometidos con la transición energética urbana.
+	\end{law}

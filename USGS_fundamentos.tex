@@ -1,0 +1,153 @@
+
+\section{Fundamentos Teóricos}
+
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50!black, title={Principios Comunes de Teledetección y Radiación}]
+Tanto el modelado solar urbano como el análisis de temperatura superficial se fundamentan en los principios de la teledetección, definida como la ciencia de obtener información sobre objetos o áreas sin contacto físico directo, mediante el análisis de datos adquiridos por sensores remotos \parencite{lillesand2015}.
+
+Todos los objetos con temperatura superior al cero absoluto ($0$ K) emiten radiación electromagnética. Los sensores capturan esta energía en bandas específicas del espectro:
+
+\begin{itemize}
+    \item \textbf{Visible (VIS):} $0.4 - 0.7 \, \mu m$, para características visuales
+    \item \textbf{Infrarrojo Cercano (NIR):} $0.7 - 1.3 \, \mu m$, para discriminación de vegetación y agua
+    \item \textbf{Infrarrojo Térmico (TIR):} $3.0 - 14 \, \mu m$, para estimación de temperatura superficial
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=blue!5, colframe=blue!60!black, title={Fundamentos del Modelado Solar Urbano (SEBE)}]
+El plugin \textbf{SEBE} calcula la energía solar potencial píxel a píxel utilizando Modelos Digitales de Superficie (DSM) del terreno y edificios, estimando irradiancia en techos y paredes, con opción de incluir vegetación \parencite{lindberg2018}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!8, colframe=green!50!black, title={Datos de Entrada Clave}]
+\begin{itemize}
+    \item \textbf{DSM (Digital Surface Model):} Imagen donde cada píxel representa altura sobre el nivel del mar (incluye terreno y edificios)
+    \item \textbf{CDSM (Canopy Digital Surface Model):} Similar al DSM pero para vegetación
+    \item \textbf{Datos Meteorológicos:} Radiación global de onda corta, preferiblemente con componentes directos y difusos
+\end{itemize}
+
+Según las mejores prácticas en teledetección, estas imágenes requieren buena resolución espacial (idealmente 1 metro o menos para entornos urbanos) \parencite{lillesand2015}.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=yellow!8, colframe=yellow!50!black, title={Base Física del Cálculo}]
+La irradiancia total para un píxel de techo ($R$) se calcula sumando radiación directa, difusa y reflejada mediante la ecuación de Lindberg et al. (2015):
+
+\begin{equation}
+    R = \sum_{i=0}^{p} \left[ ( I \omega S + D S + G ( 1 - S ) \alpha ) \right]
+    \label{eq:radiacion_total}
+\end{equation}
+
+Donde:
+\begin{itemize}
+    \item $p$: Número de parches en el hemisferio
+    \item $I$: Radiación directa incidente
+    \item $D$: Radiación difusa
+    \item $G$: Radiación global del i-ésimo parche
+    \item $\alpha$: Albedo de la superficie
+    \item $S$: Sombra calculada para cada píxel
+    \item $\omega$: Ángulo de incidencia del sol
+\end{itemize}
+
+El ángulo de incidencia del sol ($\omega$) se define como:
+
+\begin{equation}
+    \omega = \sin(\text{pendiente}) \cos(\text{alt}) \cos(\text{az} - \text{aspecto}) + 
+    \cos(\text{pendiente}) \sin(\text{alt})
+\end{equation}
+\end{tcolorbox}
+
+
+\subsubsection{Datos de Entrada y Salida para SEBE}
+
+\begin{concept}
+\begin{center}
+\begin{tabular}{p{0.35\textwidth} p{0.6\textwidth}}
+\textbf{Tipo de aplicación} & \textbf{Utilidad en investigación} \\
+\hline
+Visualización preliminar & Reconocimiento rápido del área de estudio \\
+Análisis temporal & Comparación de cambios a través del tiempo \\
+Georreferenciación & Establecer puntos de control en terreno \\
+Planificación de campo & Identificar sitios de muestreo óptimos \\
+Comunicación & Presentar resultados de forma visual \\
+\hline
+\end{tabular}
+\end{center}
+\end{concept}
+
+
+\subsection{Fundamentos del Análisis de Temperatura Superficial}
+
+\subsubsection{El Programa Landsat}
+
+Para estudios de series temporales como el del Lago Titicaca, se utilizan datos de misiones Landsat \parencite{roy2014}:
+
+
+\begin{concept}
+\begin{center}
+\begin{tabular}{p{0.4\textwidth}| p{0.55\textwidth}}
+    \textbf{Landsat 5 (1984-2011)}& Sensor TM, banda térmica a 120 m nativa\\ \hline
+    \textbf{Landsat 7 (1999-presente)}& Sensor ETM+, resolución térmica de 60 m\\ \hline
+    \textbf{Landsat 8 (2013-presente)}& Sensores OLI y TIRS, dos bandas térmicas a 100 m nativa\\ \hline
+    \textbf{Landsat 9 (2021-presente)}& Continuación de Landsat 8 con mejoras en calibración
+\end{tabular}
+\end{center}    
+\end{concept}
+
+
+Todas tienen resolución temporal de 16 días y órbita polar heliosincrónica, pasando sobre el ecuador aproximadamente a las 10:00 a.m. hora local.
+
+\subsubsection{Física de la Temperatura Superficial Terrestre (LST)}
+
+La LST es la temperatura radiativa de la "piel" superficial, diferente de la temperatura del aire. Su estimación se fundamenta en la Ley de Stefan-Boltzmann \parencite{sobrino2004}:
+
+
+\begin{summary}{Ley de Stefan-Boltzmann}{cyan!50!blue}
+\begin{equation}
+    M = \sigma T^4
+    \label{eq:stefan_boltzmann}
+\end{equation}
+Donde $M$ es la exitancia radiante espectral, $\sigma$ es la constante de Stefan-Boltzmann ($5.67 \times 10^{-8} \, \text{W m}^{-2} \text{K}^{-4}$) y $T$ es la temperatura absoluta. \\
+Dado que los objetos naturales no son cuerpos negros perfectos, se considera la \textbf{emisividad} ($\varepsilon$), relación entre la energía radiada por un material y la que radiaría un cuerpo negro a la misma temperatura. Para el agua, $\varepsilon \approx 0.98 - 0.99$, facilitando estimaciones precisas.
+\end{summary}
+
+
+
+\subsection{Plataformas Computacionales}
+
+\subsubsection{Procesamiento Local (QGIS/UMEP)}
+
+Para modelado solar urbano, se utiliza QGIS con el complemento UMEP, permitiendo análisis detallado a escala de edificio con control completo sobre parámetros de entrada.
+
+\subsubsection{Procesamiento en la Nube (Google Earth Engine)}
+
+Para análisis de grandes volúmenes de datos satelitales históricos, Google Earth Engine (GEE) ofrece ventajas significativas \parencite{gorelick2017}:
+
+\begin{example}
+    Almacena petabytes de imágenes (catálogo completo Landsat y Sentinel)
+    \\Permite ejecución de algoritmos complejos sin descarga local
+    \\Arquitectura de procesamiento paralelo para análisis rápidos
+    \\Facilita validación con técnicas avanzadas
+\end{example}
+
+Estudios recientes demuestran que GEE permite generar mapas de LST a 10m con RMSE de aproximadamente 3.6K \parencite{garcia-santos2025}, y combinaciones Landsat-Sentinel para patrones térmicos urbanos detallados \parencite{onacillova2022}.
+
+Ambas aproximaciones demuestran cómo la teledetección y el modelado espacial transforman datos brutos en información valiosa para la toma de decisiones ambientales.
+
+\subsection{Diagrama del Proceso SEBE}
+	
+	\begin{figure}[H]
+		\centering
+		\fbox{\includegraphics[width=1\linewidth]{Imágenes/Fundamentos/Flujo_SEBE.png}}
+		\caption{Flujo de trabajo simplificado del modelo SEBE}
+		\label{fig:flujosebe}
+	\end{figure}
+
+\subsection{Ejemplo de Resultado}
+
+ A continuación se muestra un ejemplo conceptual de la salida gráfica del modelo (mapa de irradiancia):
+	
+	\begin{figure}[H]
+		\centering
+		\fbox{\includegraphics[width=0.6\linewidth]{Imágenes/Fundamentos/MapaDelPeruIrradiacionEnergiaSolar.png}}
+		\caption{Mapa del Perú de Irradiacion de energía solar promedio}
+		\label{fig:mapadelperuirradiacionenergiasolar}
+	\end{figure}
+ 

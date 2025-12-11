@@ -1,0 +1,1530 @@
+\section{Procesamiento para el Análisis de Variables Ambientales mediante Teledetección}
+Este capítulo proporciona una guía práctica para la implementación en Google Colab de metodologías integrales de análisis ambiental mediante teledetección satelital. Se presenta un flujo de trabajo estructurado que incluye: pseudocódigo para comprender la lógica del procesamiento, bloques de código ejecutables en Colab para cada etapa (desde la adquisición de imágenes hasta el cálculo de índices específicos y la generación de resultados), y capturas de pantalla que permiten validar visualmente la ejecución correcta de cada paso. Este enfoque integral permite a los usuarios replicar el proceso para múltiples variables ambientales como la temperatura superficial, albedo, balance energético, deshielo, hidrología, oceanografía y cambios en la cobertura boscosa, tomando como referencia un área de estudio específica, como la Laguna Choque Grande en Perú. La metodología aprovecha las capacidades de procesamiento en la nube de Google Earth Engine integrado en Colab, junto con datos de sensores como Landsat y MODIS, ofreciendo una herramienta versátil para estudios ambientales, de cambio climático y gestión de recursos naturales.
+
+\section{Código en Google Colab}
+\subsection{Bloque I: Instalación y Configuración Inicial}
+\subsubsection{Código en Google Colab:}
+\begin{lstlisting}[language=Python]
+# BLOQUE 1
+!pip install geemap --quiet
+import ee
+import geemap
+ee.Authenticate()
+ee.Initialize(project='proyecto-gee-teledeteccion')
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque inicial establece el entorno básico para trabajar con Google Earth Engine en Google Colab. Primero, se instala de manera silenciosa la biblioteca \textbf{geemap}, que ofrece una interfaz mejorada y herramientas de visualización para Earth Engine. Luego, se importan los módulos esenciales, como \textbf{ee} (Earth Engine) y \textbf{geemap}. La función \textbf{ee.Authenticate()} se encarga de la autenticación del usuario a través de un flujo de autorización OAuth2, que abre una ventana para conectar la cuenta de Google con los servicios de Earth Engine. Por último, \textbf{ee.Initialize()} pone en marcha la API con un proyecto específico de Google Cloud ('proyecto-gee-teledeteccion'), estableciendo las credenciales necesarias para acceder al catálogo de datos y realizar procesamientos en la nube de Earth Engine.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com1.png}
+    \captionof{figure}{Compilación del Bloque I}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La compilación ejecutó correctamente la instalación silenciosa de la librería \texttt{geomap}, descargando 1.6,MB a una velocidad de 29.2,MB/s, e importó los módulos necesarios de Google Earth Engine, completando la autenticación e inicialización del proyecto \texttt{proyecto-gee-teledeteccion}, dejando el entorno configurado para realizar análisis geoespaciales.
+\end{summary}
+
+\subsection{Bloque II: Configuración de parámetros}
+
+\subsubsection{Seleccionar área de estudio en Google Earth}
+
+Para la delimitación del área de estudio se empleó la plataforma \textit{Google Earth Engine} (GEE), accesible a través del enlace oficial: \textbf{\url{https://code.earthengine.google.com/}}. En esta interfaz se realizó el proceso de digitalización manual de la zona de interés, correspondiente a la Laguna Chogue Grande, ubicada en el ámbito del nevado Huaytapallana. La selección se efectuó utilizando la herramienta de dibujo de polígonos que ofrece el panel del mapa de GEE, permitiendo capturar con precisión los vértices que delimitan el contorno geográfico del cuerpo de agua.\\
+Como se visualiza en la siguiente imagen:
+
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/map.png}
+    \captionof{figure}{Mapeo a la Laguna Choque Grande}
+\end{imagenbox}
+\end{figure}
+
+Después de seleccionar el área de estudio, en la sección \textbf{New Script} aparecerán varias líneas de código, tal como se muestra en la imagen siguiente:
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/script.png}
+    \captionof{figure}{Script Google Earth}
+\end{imagenbox}
+\end{figure}
+
+
+La imagen presenta un conjunto de 19 coordenadas geográficas (latitud/longitud) que definen un polígono de tipo \texttt{LinearRing}, representando el contorno de la Laguna Choque Grande, las cuales se integrarán al \textbf{Bloque~II} para delimitar el área de estudio en los análisis de teledetección con Google Earth Engine.
+
+\subsubsection{Código en Google Colab:}
+
+\begin{lstlisting}[language=Python]
+# BLOQUE 2
+# PARAMETROS GENERALES
+year = 2024  # Cambia esto al año que necesites
+start_date = f"{year}-01-01"
+end_date = f"{year}-12-31"
+DRIVE_FOLDER = f"Estudio_{year}"
+
+# PARAMETROS ESPECIFICOS POR TIPO DE ESTUDIO
+# Opciones: "Temperatura", "Deshielo", "Bosques", "Hidrologia", "Oceanografia", "Albedo", "Balance_Energia"
+study_type = "Temperatura"  # Cambia según tu estudio
+
+# DEFINIR AREA DE ESTUDIO (polígono con coordenadas)
+region = ee.Geometry.Polygon([
+    [-75.03642336197959, -11.932165621706236],
+    [-75.0366057521926, -11.932564508128577],
+    [-75.03650919266806, -11.93313134571923],
+    [-75.0366593963729, -11.934338495897963],
+    [-75.03658429452048, -11.935829056527913],
+    [-75.03634826012717, -11.936752780128401],
+    [-75.03581181832419, -11.938621211422845],
+    [-75.03495351143943, -11.939481945100631],
+    [-75.03409520455466, -11.939481945100631],
+    [-75.03310815163718, -11.939439958155395],
+    [-75.03272191353904, -11.938306308174708],
+    [-75.03289357491599, -11.936374893581453],
+    [-75.0330223209487, -11.934569428363105],
+    [-75.03332272835837, -11.933015878898727],
+    [-75.03362313576804, -11.931882202049529],
+    [-75.03435269662009, -11.93205015447445],
+    [-75.03529683419333, -11.931546296887582],
+    [-75.03609554615696, -11.931762297367618],
+    [-75.03642336197959, -11.932165621706236]
+])
+
+# PARAMETROS PARA AREAS PEQUENAS
+TILE_SIZE_KM = None  # Exportación directa (sin tiles)
+scale = 30  # Resolución 30 metros
+
+print(f"Configuración: Exportación directa (área pequeña), Resolución: {scale}m")
+print(f"Área de estudio definida: {region.getInfo()['coordinates']}")
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque configura los \textbf{parámetros esenciales para el procesamiento de imágenes satelitales en Google Earth Engine}, estableciendo primero parámetros generales como el \textbf{año de estudio (2024)}, el \textbf{rango de fechas completo} y la \textbf{carpeta de destino en Google Drive} llamada \textbf{``Estudio\_2024''}. Luego, permite seleccionar el \textbf{tipo de estudio específico} entre varias opciones (como \textit{Temperatura}, \textit{Deshielo}, \textit{Bosques}, etc.), que en este ejemplo se fija en \textbf{``Temperatura''} para analizar la \textbf{Laguna Choque Grande}, definida por las \textbf{19 coordenadas} que forman su polígono de estudio.
+
+Además, se especifica que se realizará una \textbf{exportación directa sin división en tiles}, con una \textbf{resolución espacial de 30 metros}, adecuada para áreas pequeñas como esta laguna. Esta configuración modular permite que, para otros estudios, simplemente se modifiquen el \textbf{study\_type}, el \textbf{polígono de coordenadas} y los \textbf{parámetros de escala}, manteniendo la misma estructura base del código.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com2.png}
+    \captionof{figure}{Compilación del Bloque II}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución del bloque confirma que la configuración se aplicó correctamente, mostrando en consola el mensaje \textbf{"Configuración: Exportación directa (área pequeña), Resolución: 30m"} y procediendo a imprimir las \textbf{coordenadas del área de estudio definida}, listando los primeros vértices del polígono correspondiente a la Laguna Choque Grande, lo que verifica que la geometría fue creada exitosamente en Google Earth Engine.
+\end{summary}
+
+\subsection{Bloque III: Estrategia de Exportación y Verificación del Área de Estudio}
+\subsubsection{Código en Google Colab:}
+\begin{lstlisting}[language=Python]
+# @title
+# BLOQUE 3
+n_tiles = 1
+grid = ee.FeatureCollection([ee.Feature(region)])
+
+print("Estrategia: Exportación directa")
+print(f"Número de unidades de exportación: {n_tiles}")
+
+# Calcular área para verificación
+area_km2 = region.area().divide(1000000).getInfo()
+print(f"Área total de estudio: {area_km2:.2f} km^2")
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque determina la estrategia de exportación para el área de estudio definida. Primero, establece que se utilizará un solo segmento de exportación (\texttt{n\_tiles = 1}), creando una colección de características de Earth Engine (\texttt{grid}) que contiene únicamente el polígono original de la Laguna Choque Grande, confirmando así que no se subdividirá en múltiples tiles. Luego, calcula y reporta el área total del polígono en kilómetros cuadrados mediante la función \texttt{area()}, \textbf{oferciendo una verificación cuantitativa útil para asegurar que la extensión espacial se ajusta a los límites de exportación directa de Earth Engine y es adecuada para procesamiento como una sola unidad}, lo cual es óptimo para áreas pequeñas como esta laguna.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com3.png}
+    \captionof{figure}{Compilación del Bloque III}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución del Bloque III confirmó que se empleará una \textbf{estrategia de exportación directa} con \textbf{1 unidad de exportación}, y calculó que el \textbf{área total de estudio} del polígono definido es de \textbf{0.30~km²}, validando así que la región corresponde a una zona pequeña apta para este modo de procesamiento en Google Earth Engine.
+\end{summary}
+
+\subsection{Bloque IV: Función de Enmascaramiento de Calidad para Imágenes Landsat}
+
+\subsubsection{Código en Google Colab:}
+
+\begin{lstlisting}[language=Python]
+# @title
+# BLOQUE 4
+def maskLandsatQA(img):
+    qa = img.select('QA_PIXEL')
+    mask = qa.bitwiseAnd(1<<1).eq(0)\
+             .And(qa.bitwiseAnd(1<<2).eq(0))\
+             .And(qa.bitwiseAnd(1<<3).eq(0))\
+             .And(qa.bitwiseAnd(1<<4).eq(0))\
+             .And(qa.bitwiseAnd(1<<5).eq(0))
+    return img.updateMask(mask)
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque define la función \texttt{maskLandsatQA()} diseñada para filtrar píxeles no deseados en imágenes Landsat usando su banda de calidad (\texttt{QA\_PIXEL}). La función \textbf{lee la banda de control de calidad} y aplica operaciones \textbf{bit a bit} (\texttt{bitwiseAnd}) con máscaras específicas para identificar y eliminar píxeles afectados por diversos problemas: \textbf{nubes densas} (bit 1), \textbf{nubes cirrus} (bit 2), \textbf{sombra de nubes} (bit 3), \textbf{nieve} (bit 4) y \textbf{agua} (bit 5). Solo los píxeles donde \textbf{todos estos flags están desactivados} (valor 0) se conservan mediante la función \texttt{updateMask()}. Este proceso es \textbf{fundamental para garantizar que el análisis posterior se realice únicamente con datos ópticos de superficie limpios y confiables}, eliminando artefactos atmosféricos y otros factores de interferencia que podrían distorsionar los cálculos de temperatura u otros índices.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com4.png}
+    \captionof{figure}{Compilación del Bloque IV}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución del Bloque~4 se completó exitosamente en \textbf{0 segundos}, lo que confirma que la función \textbf{\texttt{maskLandsatQA}} fue definida correctamente sin errores de sintaxis y está lista para ser utilizada en el procesamiento de imágenes Landsat.
+\end{summary}
+
+\subsection{Bloque V: Selección Automática de Colecciones Landsat por Año}
+\subsubsection{Código en Google Colab:}
+\begin{lstlisting}[language=Python]
+# @title
+# BLOQUE 5
+def getLandsatCollection(year, region, start, end):
+
+    if year < 1972 or year > 2025:
+        print(f"Año {year} fuera del rango disponible (1972-2025)")
+        return ee.ImageCollection([])
+
+    print(f"Buscando imagenes Landsat para el ano {year}...")
+
+    # Landsat 1-3 (MSS) - 1972-1983
+    L1 = ee.ImageCollection('LANDSAT/LM01/C02/T1')\
+            .filterBounds(region).filterDate(start, end)\
+            .select(['B4', 'B5', 'B6', 'B7'], ['GREEN', 'RED', 'NIR1', 'NIR2'])
+
+    L2 = ee.ImageCollection('LANDSAT/LM02/C02/T1')\
+            .filterBounds(region).filterDate(start, end)\
+            .select(['B4', 'B5', 'B6', 'B7'], ['GREEN', 'RED', 'NIR1', 'NIR2'])
+
+    L3 = ee.ImageCollection('LANDSAT/LM03/C02/T1')\
+            .filterBounds(region).filterDate(start, end)\
+            .select(['B4', 'B5', 'B6', 'B7'], ['GREEN', 'RED', 'NIR1', 'NIR2'])
+
+    # Landsat 4-5 (TM) - 1982-2012
+    L4 = ee.ImageCollection('LANDSAT/LT04/C02/T1_L2')\
+            .filterBounds(region).filterDate(start, end)\
+            .map(maskLandsatQA)\
+            .select(['SR_B1','SR_B2','SR_B3','SR_B4','SR_B5','SR_B7','ST_B6'],
+                    ['BLUE','GREEN','RED','NIR','SWIR1','SWIR2','TEMP'])
+
+    L5 = ee.ImageCollection('LANDSAT/LT05/C02/T1_L2')\
+            .filterBounds(region).filterDate(start, end)\
+            .map(maskLandsatQA)\
+            .select(['SR_B1','SR_B2','SR_B3','SR_B4','SR_B5','SR_B7','ST_B6'],
+                    ['BLUE','GREEN','RED','NIR','SWIR1','SWIR2','TEMP'])
+
+    # Landsat 7 (ETM+) - 1999-presente
+    L7 = ee.ImageCollection('LANDSAT/LE07/C02/T1_L2')\
+            .filterBounds(region).filterDate(start, end)\
+            .map(maskLandsatQA)\
+            .select(['SR_B1','SR_B2','SR_B3','SR_B4','SR_B5','SR_B7','ST_B6'],
+                    ['BLUE','GREEN','RED','NIR','SWIR1','SWIR2','TEMP'])
+
+    # Landsat 8 (OLI/TIRS) - 2013-presente
+    L8 = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')\
+            .filterBounds(region).filterDate(start, end)\
+            .map(maskLandsatQA)\
+            .select(['SR_B2','SR_B3','SR_B4','SR_B5','SR_B6','SR_B7','ST_B10'],
+                    ['BLUE','GREEN','RED','NIR','SWIR1','SWIR2','TEMP'])
+
+    # Landsat 9 (OLI-2/TIRS-2) - 2021-presente
+    L9 = ee.ImageCollection('LANDSAT/LC09/C02/T1_L2')\
+            .filterBounds(region).filterDate(start, end)\
+            .map(maskLandsatQA)\
+            .select(['SR_B2','SR_B3','SR_B4','SR_B5','SR_B6','SR_B7','ST_B10'],
+                    ['BLUE','GREEN','RED','NIR','SWIR1','SWIR2','TEMP'])
+
+    try:
+        if 1972 <= year <= 1978:
+            collection = L1.merge(L2).merge(L3)
+            print("Usando Landsat 1, 2, 3 (MSS)")
+        elif 1979 <= year <= 1982:
+            collection = L2.merge(L3)
+            print("Usando Landsat 2, 3 (MSS)")
+        elif 1983 <= year <= 1984:
+            collection = L3.merge(L4)
+            print("Usando Landsat 3 (MSS) y Landsat 4 (TM)")
+        elif 1985 <= year <= 1993:
+            collection = L4.merge(L5)
+            print("Usando Landsat 4, 5 (TM)")
+        elif 1994 <= year <= 1999:
+            collection = L5.merge(L7)
+            print("Usando Landsat 5 (TM) y Landsat 7 (ETM+)")
+        elif 2000 <= year <= 2003:
+            collection = L5.merge(L7)
+            print("Usando Landsat 5 (TM) y Landsat 7 (ETM+)")
+        elif 2004 <= year <= 2012:
+            collection = L5.merge(L7)
+            print("Usando Landsat 5 (TM) y Landsat 7 (ETM+)")
+        elif year == 2013:
+            collection = L7.merge(L8)
+            print("Usando Landsat 7 (ETM+) y Landsat 8 (OLI)")
+        elif 2014 <= year <= 2021:
+            collection = L8
+            print("Usando Landsat 8 (OLI)")
+        elif 2022 <= year <= 2025:
+            collection = L8.merge(L9)
+            print("Usando Landsat 8 y 9 (OLI)")
+        else:
+            collection = ee.ImageCollection([])
+
+        count = collection.size().getInfo()
+        if count == 0:
+            print(f"No se encontraron imagenes para {year}")
+        else:
+            print(f"Encontradas {count} escenas Landsat")
+
+        return collection
+
+    except Exception as e:
+        print(f"Error al cargar coleccion Landsat: {e}")
+        return ee.ImageCollection([])
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque define la función \texttt{getLandsatCollection()} que \textbf{selecciona automáticamente las colecciones de imágenes Landsat apropiadas según el año especificado}. Primero, verifica que el año esté dentro del rango histórico (1972-2025) y luego carga colecciones específicas para cada satélite (Landsat 1-3 MSS, 4-5 TM, 7 ETM+, 8-9 OLI/TIRS), aplicando en cada caso el \textbf{filtrado espacial y temporal} (\texttt{filterBounds}, \texttt{filterDate}), el \textbf{enmascaramiento de calidad} mediante la función predefinida, y la \textbf{renormalización de bandas} a nombres estándar para uniformizar el procesamiento posterior. La lógica condicional fusiona (\texttt{merge}) colecciones en periodos de superposición entre misiones, garantizando así la \textbf{máxima cobertura temporal posible} para cualquier año dentro de la serie histórica, lo que permite análisis multitemporales consistentes independientemente de las transiciones entre sensores.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com2.png}
+    \captionof{figure}{Compilación del Bloque V}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución del código verificó que el año 2024 está dentro del rango válido (1972-2025) y procedió a buscar imágenes Landsat, definiendo correctamente las colecciones de Landsat 1-3 (MSS) con sus bandas espectrales renombradas, Landsat 4-5 (TM) aplicando la máscara de calidad y seleccionando bandas de reflectancia superficial y temperatura, y Landsat 7 (ETM+) con el mismo procesamiento, quedando pendiente la definición de Landsat 8 (OLI/TIRS) para completar la secuencia de satélites.
+\end{summary}
+
+\subsubsection{Bloque VI: Cálculo Automático de Índices Específicos por Tipo de Estudio}
+
+\subsubsection{Código en Google Colab:}
+\begin{lstlisting}[language=Python]
+# @title
+# BLOQUE 6
+def calculate_indices(composite, study_type):
+
+    print(f"Calculando indices para: {study_type}")
+
+    try:
+        if study_type == "Temperatura":
+            lst = composite.select('TEMP').multiply(0.00341802).add(149.0)\
+                          .subtract(273.15).rename('LST_C')
+            print("Temperatura de superficie calculada (LST_C)")
+            return lst
+
+        elif study_type == "Albedo":
+            albedo = composite.expression(
+                '0.3 * RED + 0.3 * NIR + 0.4 * SWIR', {
+                    'RED': composite.select('RED'),
+                    'NIR': composite.select('NIR'),
+                    'SWIR': composite.select('SWIR1')
+                }).rename('ALBEDO')
+            print("Albedo calculado (formula simplificada)")
+            return albedo
+
+        elif study_type == "Balance_Energia":
+
+            albedo = composite.expression(
+                '0.3 * RED + 0.3 * NIR + 0.4 * SWIR', {
+                    'RED': composite.select('RED'),
+                    'NIR': composite.select('NIR'),
+                    'SWIR': composite.select('SWIR1')
+                }).rename('ALBEDO')
+
+            ndvi = composite.normalizedDifference(['NIR','RED']).rename('NDVI')
+
+            lst = composite.select('TEMP').multiply(0.00341802).add(149.0)\
+                          .subtract(273.15).rename('LST_C')
+
+            balance = ndvi.multiply(0.5).add(albedo.multiply(0.3))\
+                         .subtract(lst.multiply(0.2)).rename('BALANCE')
+
+            result = albedo.addBands(ndvi).addBands(lst).addBands(balance)
+            print("Balance de energia calculado (Albedo + NDVI + LST + Balance)")
+            return result
+
+        elif study_type == "Deshielo":
+            ndsi = composite.normalizedDifference(['GREEN','SWIR1']).rename('NDSI')
+
+            ndvi = composite.normalizedDifference(['NIR','RED']).rename('NDVI')
+
+            lst = composite.select('TEMP').multiply(0.00341802).add(149.0)\
+                          .subtract(273.15).rename('LST_C')
+
+            result = ndsi.addBands(ndvi).addBands(lst)
+            print("Indices de deshielo calculados (NDSI, NDVI, LST)")
+            return result
+
+        elif study_type == "Bosques":
+            ndvi = composite.normalizedDifference(['NIR','RED']).rename('NDVI')
+
+            evi = composite.expression(
+                '2.5 * ((NIR - RED) / (NIR + 6 * RED - 7.5 * BLUE + 1))',
+                {'NIR': composite.select('NIR'),
+                 'RED': composite.select('RED'),
+                 'BLUE': composite.select('BLUE')}).rename('EVI')
+
+            savi = composite.expression(
+                '1.5 * ((NIR - RED) / (NIR + RED + 0.5))',
+                {'NIR': composite.select('NIR'),
+                 'RED': composite.select('RED')}).rename('SAVI')
+
+            result = ndvi.addBands(evi).addBands(savi)
+            print("Indices de vegetacion calculados (NDVI, EVI, SAVI)")
+            return result
+
+        elif study_type == "Hidrologia":
+            mndwi = composite.normalizedDifference(['GREEN','SWIR1']).rename('MNDWI')
+
+            ndwi = composite.normalizedDifference(['GREEN','NIR']).rename('NDWI')
+
+            ndpi = composite.normalizedDifference(['GREEN','RED']).rename('NDPI')
+
+            result = mndwi.addBands(ndwi).addBands(ndpi)
+            print("Indices hidrologicos calculados (MNDWI, NDWI, NDPI)")
+            return result
+
+        elif study_type == "Oceanografia":
+            ndci = composite.normalizedDifference(['NIR','RED']).rename('NDCI')
+
+            fai = composite.expression(
+                'NIR - (RED + (SWIR1 - RED) * 0.01)',
+                {'NIR': composite.select('NIR'),
+                 'RED': composite.select('RED'),
+                 'SWIR1': composite.select('SWIR1')}).rename('FAI')
+
+            turbidity = composite.select('RED').multiply(100).rename('Turbidity')
+
+            result = ndci.addBands(fai).addBands(turbidity)
+            print("Indices oceanograficos calculados (NDCI, FAI, Turbidez)")
+            return result
+
+        else:
+            default_bands = composite.select(['BLUE','GREEN','RED','NIR','SWIR1','SWIR2'])
+            print("Exportando bandas reflectivas estandar")
+            return default_bands
+
+    except Exception as e:
+        print(f"Error calculando indices: {e}")
+        return composite.select(['BLUE','GREEN','RED'])
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque implementa la función \texttt{calculate\_indices()} que \textbf{calcula dinámicamente distintos índices espectrales según el tipo de estudio seleccionado}. Para cada categoría (\textit{Temperatura}, \textit{Deshielo}, \textit{Bosques}, \textit{Hidrología}, \textit{Oceanografía}, \textit{Albedo} o \textit{Balance\_Energía}), aplica fórmulas específicas utilizando las bandas estandarizadas del compuesto Landsat: en \textbf{térmica} convierte valores digitales a grados Celsius (LST), en \textbf{vegetación} calcula NDVI, EVI y SAVI, en \textbf{hidrología} genera MNDWI y NDWI para delimitación de agua, y en \textbf{criósfera} obtiene NDSI para detección de nieve/hielo. Cada cálculo utiliza métodos de \textbf{álgebra de mapas} (\texttt{normalizedDifference}, \texttt{expression}) y \textbf{combinación de bandas} (\texttt{addBands}), asegurando que los resultados mantengan la coherencia geométrica y radiométrica necesaria para análisis comparativos.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com6.png}
+    \captionof{figure}{Compilación del Bloque VI}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La compilación del Bloque VI se completó correctamente sin errores de sintaxis, definiendo adecuadamente la función \texttt{calculate\_indices} para procesar diferentes tipos de estudios de teledetección.
+\end{summary}
+
+\subsection{Bloque VII: Ejecución del Flujo Principal de Procesamiento}
+
+\subsubsection{Código en Google Colab:}
+\begin{lstlisting}[language=Python]
+# @title
+# BLOQUE 7
+print("=" * 60)
+print("INICIANDO PROCESAMIENTO PRINCIPAL")
+print("=" * 60)
+
+landsatCol = getLandsatCollection(year, region, start_date, end_date)
+scene_count = landsatCol.size().getInfo()
+
+if scene_count == 0:
+    print("No hay imagenes disponibles para el año seleccionado.")
+    print("Verifica las coordenadas del area de estudio y las fechas.")
+
+else:
+    print(f"Procesando {scene_count} escenas Landsat...")
+
+    try:
+        composite = landsatCol.median().clip(region)
+        print("Compuesto mediano creado exitosamente")
+
+        band_names = composite.bandNames().getInfo()
+        print(f"Bandas disponibles: {band_names}")
+
+    except Exception as e:
+        print(f"Error creando compuesto: {e}")
+        composite = None
+
+    if composite is not None:
+        result = calculate_indices(composite, study_type)
+
+        try:
+            result_info = result.getInfo()
+            print(f"Indices calculados exitosamente para: {study_type}")
+
+            if 'bands' in result_info:
+                result_bands = [band['id'] for band in result_info['bands']]
+                print(f"Bandas generadas: {result_bands}")
+            else:
+                print("Informacion de bandas no disponible")
+
+        except Exception as e:
+            print(f"Error en el resultado: {e}")
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque ejecuta el \textbf{flujo principal de procesamiento} integrando todas las funciones predefinidas. Primero, obtiene la colección Landsat correspondiente al año y área de estudio mediante \texttt{getLandsatCollection()}, verificando la disponibilidad de escenas. Si existen imágenes, genera un \textbf{compuesto mediano} (\texttt{median()}) que sintetiza temporalmente las observaciones y recorta (\texttt{clip()}) al área de interés. Luego, aplica la función \texttt{calculate\_indices()} para calcular los índices específicos según el tipo de estudio seleccionado, obteniendo finalmente un resultado multibanda que se valida extrayendo sus metadatos (\texttt{getInfo()}) para confirmar la correcta generación de todas las bandas calculadas, proporcionando así una \textbf{verificación en tiempo real} del procesamiento completo.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com7.png}
+    \captionof{figure}{Compilación del Bloque VII}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución del código procesó correctamente las \textbf{33 escenas Landsat 8 y 9} para el año \textbf{2024}, creando un \textbf{compuesto mediano} exitoso con las bandas espectrales disponibles y calculando el índice de \textbf{Temperatura de superficie (LST\_C)}, confirmando que la operación finalizó sin errores y generando la banda \texttt{['LST\_C']} como resultado.
+\end{summary}
+
+\subsection{Bloque VIII: Exportación de Resultados a Google Drive}
+\subsubsection{Código en Google Colab:}
+\begin{lstlisting}[language=Python]
+# @title
+# BLOQUE 8
+print("=" * 60)
+print("INICIANDO EXPORTACIÓN DE RESULTADOS")
+print("=" * 60)
+
+result = result.toFloat()
+
+has_valid_result = False
+try:
+    test_value = result.bandNames().getInfo()
+    if len(test_value) > 0:
+        has_valid_result = True
+        print("Resultados válidos para exportar")
+    else:
+        print("Resultados vacíos - no hay bandas para exportar")
+except Exception as e:
+    print(f"Error verificando resultados: {e}")
+    has_valid_result = False
+
+if has_valid_result:
+    # Exportar directamente toda el área (sin tiles)
+    description = f'{study_type}_{year}_completo'
+    fileName = f'{study_type}_{year}_completo'
+
+    print(f"Preparando exportación del área completa...")
+    print(f"Archivo: {fileName}")
+    print(f"Carpeta destino: {DRIVE_FOLDER}")
+    print(f"Resolución: {scale} metros")
+    print(f"Formato: GeoTIFF")
+
+    try:
+        task = ee.batch.Export.image.toDrive(
+            image = result,
+            description = description,
+            folder = DRIVE_FOLDER,
+            fileNamePrefix = fileName,
+            region = region,
+            scale = scale,
+            crs = 'EPSG:4326',
+            maxPixels = 1e9,
+            fileFormat = 'GeoTIFF'
+        )
+        task.start()
+
+        task_id = task.id
+        print(f" Tarea de exportación iniciada exitosamente")
+        print(f"  ID de tarea: {task_id}")
+
+        print("\n" + "="*50)
+        print("INFORMACIÓN DE EXPORTACIÓN")
+        print("="*50)
+        print(f"Tipo de estudio: {study_type}")
+        print(f"Año: {year}")
+        print(f"Área de estudio: Polígono definido")
+        print(f"Resolución: {scale} metros")
+        print(f"Carpeta en Google Drive: '{DRIVE_FOLDER}'")
+        print(f"Archivo: {fileName}.tif")
+        print("\nPARA MONITOREAR:")
+        print("1. Ve a: https://code.earthengine.google.com/tasks")
+        print("2. Busca la tarea con ID: {task_id}")
+        print("3. La tarea completada aparecerá en Google Drive")
+
+    except Exception as e:
+        print(f" Error iniciando tarea de exportación: {e}")
+
+else:
+    print("No se pudo iniciar la exportación")
+
+print("\n" + "="*60)
+print("PROCESO COMPLETADO")
+print("="*60)
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque gestiona la \textbf{exportación final de los resultados procesados} a Google Drive en formato GeoTIFF. Primero, convierte los resultados a tipo de dato flotante (\texttt{toFloat()}) y verifica su validez comprobando la existencia de bandas. Luego, configura los parámetros de exportación mediante \texttt{ee.batch.Export.image.toDrive()}, especificando el nombre del archivo, la carpeta destino, la región de interés, la resolución espacial (escala) y el sistema de referencia de coordenadas (EPSG:4326). Inicia la tarea de exportación en segundo plano con \texttt{task.start()} y proporciona el \textbf{ID único de la tarea} para su monitoreo en la consola de Earth Engine. Finalmente, entrega instrucciones detalladas para localizar el archivo exportado en Google Drive y verificar el estado del proceso en la plataforma, asegurando así la trazabilidad completa del flujo de trabajo desde el procesamiento hasta la obtención del producto final.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com8.png}
+    \captionof{figure}{Compilación del Bloque II}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución completó exitosamente el proceso de exportación de resultados del estudio de \textbf{Temperatura 2024} como un archivo \textbf{GeoTIFF} a la carpeta \texttt{Estudio\_2024} en Google Drive, generando un \textbf{enlace de monitoreo} para verificar el estado de la exportación en la plataforma de Google Earth Engine.
+\end{summary}
+
+\subsection{Visualizar en Google Earth}
+La ejecución completó exitosamente el proceso de exportación de resultados del estudio de \textbf{Temperatura 2024} como un archivo \textbf{GeoTIFF} a la carpeta \texttt{Estudio\_2024} en Google Drive y proporcionó el enlace directo \textbf{https://code.earthengine.google.com/} donde, al acceder a la pestaña \textbf{Tasks}, se podrá monitorear el progreso y estado final de la exportación, tal como se muestra en la imagen adjunta.
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/tasks.png}
+    \captionof{figure}{Exportación de la imagen satelital}
+\end{imagenbox}
+\end{figure}
+
+\subsection{Visualizar en Google Drive}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/drive.png}
+    \captionof{figure}{Creación de la carpeta en Mi Unidad}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación}{green!60!blue}
+La imagen muestra la organización en \textbf{Google Drive} después de ejecutar el flujo de trabajo, donde se ha creado automáticamente la carpeta \textbf{Estudio\_2024} que contiene los resultados exportados del análisis de temperatura, confirmando así que el proceso de exportación fue exitoso y que los archivos están disponibles para su uso. Esta misma estructura se replicará de manera análoga para los demás años conforme se ejecuten los análisis correspondientes.
+\end{summary}
+
+\section{Convertir imágenes en formato .tiff en .png para visualizar la imagen satelital}
+
+Los archivos en formato \textbf{.tiff} (Tagged Image File Format) generados por Google Earth Engine contienen información de georreferenciación y múltiples bandas, ideales para análisis geoespacial. Para su visualización en navegadores web, informes o presentaciones, se recomienda convertirlos a formato \textbf{.png} (Portable Network Graphics), un formato comprimido y ampliamente compatible.
+
+\subsection{Método recomendado: Conversión mediante QGIS Desktop 3.44.3}
+Para una conversión que preserve la calidad visual y permita ajustes geoespaciales, se recomienda utilizar \textbf{QGIS Desktop 3.44.3 (Qt6)}, un sistema de información geográfica de código abierto. A continuación, se muestra un video tutorial del proceso:
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+\centering
+\href{https://www.youtube.com/watch?v=vIX4LCV97gs&pp=ygUNaW5zdGFsYXIgcWdpcw%3D%3D}{\includegraphics[width=0.85\linewidth]{resources/QGIS_logo,_2017.svg.png}}
+\captionof{figure}{Video tutorial: Conversión de TIFF a PNG en QGIS \ (Haz clic en la imagen para ver el video)}
+\end{imagenbox}
+\end{figure}
+
+\subsection{Pasos para la conversión en QGIS Desktop 3.44.3:}
+
+\begin{example}
+\begin{enumerate}
+\item \textbf{Abrir QGIS Desktop 3.44.3 (Qt6)}.
+\item \textbf{Arrastrar el archivo .tiff} directamente desde el explorador de archivos hacia el área de trabajo de QGIS.
+\item \textbf{Acceder al menú de exportación}: Ir a \textit{Proyecto → Importar/Exportar → Exportar mapa a imagen}.
+\item \textbf{Configurar la exportación}:
+\begin{itemize}
+\item Nombre del archivo: asignar nombre descriptivo (ej: \texttt{Temperatura\_2024\_completo})
+\item Formato: seleccionar \textbf{PNG (.png)}
+\item Ajustar resolución y tamaño si es necesario
+\item Definir la extensión del área a exportar
+\end{itemize}
+\item \textbf{Guardar} el archivo en la ubicación deseada.
+\end{enumerate}
+\end{example}
+
+
+
+\subsection{Ejemplo por pasos:}
+\subsubsection{Paso 1: Abrir el QGIS y arrastrar el archivo:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/paso1.png}
+    \captionof{figure}{Procedimiento de conversión .tiff a .png}
+\end{imagenbox}
+\end{figure}
+
+\subsubsection{Paso 2: Entrar en el apartado de Proyecto y le damos Importar/Exportar}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/paso2.png}
+    \captionof{figure}{Procedimiento de conversión .tiff a .png}
+\end{imagenbox}
+\end{figure}
+
+\subsubsection{Paso 3: Imagen en formato .png}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/paso3.png}
+    \captionof{figure}{Procedimiento de conversión .tiff a .png}
+\end{imagenbox}
+\end{figure}
+
+\subsection{Visualización de la Laguna Choque Grande:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/Imagen cuenca.png}
+    \captionof{figure}{Imagen en formato .png}
+\end{imagenbox}
+\end{figure}
+
+\section{Procesamiento de Datos Satelitales}
+Esta sección implementa un sistema integral de procesamiento que transforma automáticamente las imágenes satelitales en formato TIFF generadas previamente mediante Google Earth Engine para variables como temperatura, albedo, índices de vegetación y parámetros hidrológicos en un conjunto estructurado de estadísticas avanzadas y reportes analíticos. El flujo de trabajo incluye la detección automática de carpetas por año, validación de integridad de archivos, cálculo de métricas descriptivas y espaciales, procesamiento con monitoreo en tiempo real, y exportación a formatos tabulares (Excel/CSV) con metadatos completos, facilitando así el análisis multitemporal y multivariable para aplicaciones de investigación ambiental y gestión de recursos naturales.
+
+\subsection{Ubicación de las carpetas}
+Las carpetas de estudio deben ubicarse directamente en Mi unidad de Google Drive, organizadas en una estructura jerárquica clara donde cada año de análisis corresponde a una carpeta independiente con el formato \texttt{Estudio\_AAAA}, tal como se muestra en el ejemplo de la siguiente imagen. Esta organización permite al sistema detectar automáticamente los períodos disponibles y acceder a los archivos TIFF correspondientes para su procesamiento estadístico.
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/ubi.png}
+    \captionof{figure}{Ubicación de las carpetas}
+\end{imagenbox}
+\end{figure}
+
+\subsection{BLOQUE I: Instalación e Importación de Librerías}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 1: INSTALACIÓN E IMPORTACIÓN
+!pip install rasterio scikit-image xlsxwriter openpyxl netCDF4 pandas numpy scipy tqdm matplotlib seaborn --quiet
+
+import os
+import glob
+import re
+import numpy as np
+import pandas as pd
+import rasterio
+from rasterio.plot import show
+from skimage.transform import resize
+from scipy.stats import skew, kurtosis, mode, gmean, hmean
+import warnings
+warnings.filterwarnings('ignore')
+from tqdm.notebook import tqdm
+import matplotlib.pyplot as plt
+import seaborn as sns
+from google.colab import drive
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque inicial instala e importa todas las librerías esenciales para el procesamiento de imágenes satelitales, incluyendo \texttt{rasterio} para manipulación de datos geoespaciales, \texttt{pandas} y \texttt{numpy} para análisis estadístico, \texttt{scikit-image} para procesamiento avanzado de imágenes, \texttt{scipy} para cálculos estadísticos especializados, \texttt{tqdm} para barras de progreso interactivas, \texttt{matplotlib} y \texttt{seaborn} para visualización, y \texttt{google.colab.drive} para integración con Google Drive, configurando así un entorno completo y optimizado para el análisis de datos ambientales multitemporales.
+\end{summary}
+
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com1.png}
+    \captionof{figure}{Compilación del Bloque I}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La compilación del bloque de importaciones se ejecutó exitosamente sin errores, confirmando que todas las librerías esenciales incluyendo \texttt{rasterio}, \texttt{pandas}, \texttt{numpy}, \texttt{scipy}, \texttt{matplotlib} y \texttt{seaborn} están correctamente importadas y disponibles para el procesamiento de imágenes satelitales, estableciendo el entorno técnico necesario para las etapas posteriores de análisis geoespacial y estadístico.
+\end{summary}
+
+
+
+
+
+\subsection{BLOQUE II: Configuración y Montaje de Google Drive}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 2: CONFIGURACIÓN Y MONTAJE DRIVE
+print("=" * 70)
+print("PROCESADOR AVANZADO DE IMÁGENES SATELITALES")
+print("=" * 70)
+
+# Montar Google Drive
+drive.mount('/content/drive', force_remount=True)
+
+# Configuración principal
+ROOT = "/content/drive/MyDrive"
+OUT_DIR = os.path.join(ROOT, "RESULTADOS_ESTADISTICAS")
+os.makedirs(OUT_DIR, exist_ok=True)
+
+# Variables de estudio disponibles
+VARIABLES = ["Temperatura", "Deshielo", "Bosques", "Hidrologia", 
+             "Oceanografia", "Albedo", "Balance_Energia"]
+
+# Nombres de bandas según variable (basado en tu código anterior)
+BAND_NAMES = {
+    "Temperatura": ["LST_C"],
+    "Deshielo": ["NDSI", "NDVI", "LST_C"],
+    "Bosques": ["NDVI", "EVI", "SAVI"],
+    "Hidrologia": ["MNDWI", "NDWI", "NDPI"],
+    "Oceanografia": ["NDCI", "FAI", "Turbidity"],
+    "Albedo": ["ALBEDO"],
+    "Balance_Energia": ["ALBEDO", "NDVI", "LST_C", "BALANCE"]
+}
+
+print(f"Directorio raíz: {ROOT}")
+print(f"Directorio de salida: {OUT_DIR}")
+print(f"Variables configuradas: {', '.join(VARIABLES)}")
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque configura el entorno de trabajo del procesador avanzado de imágenes satelitales, montando primero Google Drive en el entorno de Colab para acceder a los archivos almacenados, definiendo el directorio raíz \texttt{/content/drive/MyDrive} y creando la carpeta de salida \texttt{RESULTADOS\_ESTADISTICAS}, luego establece la lista de variables ambientales a procesar (temperatura, deshielo, bosques, hidrología, oceanografía, albedo y balance energético) junto con un diccionario que mapea cada variable con sus bandas satelitales correspondientes, e imprime finalmente la configuración establecida para verificación, sentando así las bases para la detección y procesamiento automatizado de los datos geoespaciales.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com2.png}
+    \captionof{figure}{Compilación del Bloque II}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución del bloque configuró exitosamente el entorno del procesador avanzado de imágenes satelitales, montando correctamente Google Drive en la ruta \texttt{/content/drive}, creando el directorio de salida \texttt{RESULTADOS\_ESTADISTICAS} para almacenar los resultados, e inicializando las siete variables ambientales definidas (temperatura, deshielo, bosques, hidrología, oceanografía, albedo y balance energético) junto con sus respectivas bandas satelitales asociadas, confirmando así que la configuración base está lista para la detección y procesamiento de datos geoespaciales.
+\end{summary}
+
+\subsection{BLOQUE III: Detección Automática de Años}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 3: DETECCIÓN AUTOMÁTICA DE AÑOS
+print("\n" + "=" * 60)
+print("ESCANEANDO CARPETAS DISPONIBLES")
+print("=" * 60)
+
+# Buscar carpetas automáticamente
+all_folders = glob.glob(os.path.join(ROOT, "Estudio_*"))
+available_years = []
+
+for folder in all_folders:
+    match = re.search(r'Estudio_(\d{4})$', os.path.basename(folder))
+    if match and os.path.isdir(folder):
+        year = int(match.group(1))
+        available_years.append(year)
+
+available_years.sort()
+YEARS = available_years if available_years else []
+
+if not YEARS:
+    print("⚠️  NO SE ENCONTRARON CARPETAS 'Estudio_XXXX'")
+    print("   Verifica que las carpetas existan en:")
+    print(f"   {ROOT}")
+    print("\n   Ejemplo de estructura esperada:")
+    print("   /MyDrive/Estudio_2020/")
+    print("   /MyDrive/Estudio_2021/")
+    print("   /MyDrive/Estudio_2022/")
+    exit()
+else:
+    print(f"✅ Encontradas {len(YEARS)} carpetas de estudio:")
+    for y in YEARS:
+        print(f"   - Estudio_{y}")
+    
+    print(f"\nPeríodo detectado: {min(YEARS)} - {max(YEARS)}")
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+El bloque ejecutó un escaneo automático de Google Drive para detectar carpetas con el patrón \texttt{Estudio\_\textless año\textgreater}, identificó exitosamente las carpetas de estudio disponibles, extrajo los años correspondientes mediante expresiones regulares, los almacenó en orden cronológico y mostró un reporte detallado con la cantidad encontrada, el listado completo de años detectados y el período temporal cubierto, estableciendo así la base temporal para el procesamiento secuencial de los datos satelitales multianuales.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com3.png}
+    \captionof{figure}{Compilación del Bloque III}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+El escaneo automático ejecutado identificó exitosamente 6 carpetas de estudio correspondientes a los años 2020, 2021, 2022, 2023, 2024 y 2025, detectando un período continuo de 6 años (2020–2025) disponible para procesamiento, lo que confirma que la estructura de directorios en Google Drive cumple con el formato esperado \texttt{Estudio\_AAAA} y que los datos están correctamente organizados para el análisis temporal de las variables ambientales.
+\end{summary}
+
+\subsection{BLOQUE IV: Verificación de Archivos por Año}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 4: VERIFICACIÓN DE ARCHIVOS POR AÑO
+print("\n" + "=" * 60)
+print("VERIFICANDO ARCHIVOS DISPONIBLES")
+print("=" * 60)
+
+files_by_year = {}
+missing_variables = {}
+
+for year in YEARS:
+    study_dir = os.path.join(ROOT, f"Estudio_{year}")
+    if not os.path.exists(study_dir):
+        print(f"⚠️  Carpeta no encontrada: Estudio_{year}")
+        continue
+    
+    year_files = {}
+    print(f"\n�� Año {year}:")
+    print(f"   Ruta: {study_dir}")
+    
+    for var in VARIABLES:
+        # Buscar archivos con patrón variable_año_completo.tif
+        pattern = os.path.join(study_dir, f"{var}_{year}_completo.tif")
+        matching_files = glob.glob(pattern)
+        
+        if matching_files:
+            year_files[var] = matching_files[0]
+            print(f"   ✅ {var}: {os.path.basename(matching_files[0])}")
+        else:
+            # Intentar patrón alternativo
+            alt_pattern = os.path.join(study_dir, f"*{var}*.tif")
+            alt_files = glob.glob(alt_pattern)
+            if alt_files:
+                year_files[var] = alt_files[0]
+                print(f"   ⚠️  {var}: {os.path.basename(alt_files[0])} (nombre alternativo)")
+            else:
+                if var not in missing_variables:
+                    missing_variables[var] = []
+                missing_variables[var].append(year)
+                print(f"   ❌ {var}: No encontrado")
+    
+    if year_files:
+        files_by_year[year] = year_files
+
+if missing_variables:
+    print("\n�� RESUMEN DE VARIABLES FALTANTES:")
+    for var, years in missing_variables.items():
+        print(f"   {var}: {len(years)} años sin datos")
+
+print(f"\n✅ Total de años con datos: {len(files_by_year)}")
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+El bloque ejecutó una verificación exhaustiva de la disponibilidad de archivos TIFF para cada combinación de año y variable ambiental, buscando sistemáticamente archivos con el patrón \texttt{variable\_año\_completo.tif} en cada carpeta anual, identificando tanto archivos con nombres exactos como alternativos, generando un reporte detallado por año que incluye confirmaciones de archivos encontrados (\texttt{✅}), advertencias de nombres alternativos (\texttt{⚠️}) y alertas de archivos faltantes (\texttt{❌}), y finalizando con un resumen consolidado que indica el total de años con datos disponibles y las variables incompletas, estableciendo así el inventario preciso necesario para el procesamiento estadístico posterior.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com4.png}
+    \captionof{figure}{Compilación del Bloque IV}
+\end{imagenbox}
+\end{figure}
+
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La verificación de archivos identificó que para cada año del período 2020–2024 se encuentra disponible exclusivamente el archivo de temperatura superficial (\texttt{Temperatura\_AAAA\_completo.tif}), mientras que las otras seis variables ambientales definidas (deshielo, bosques, hidrología, oceanografía, albedo y balance energético) no fueron encontradas en ninguna de las carpetas anuales escaneadas, indicando que únicamente los datos térmicos están completos y listos para el procesamiento estadístico posterior.
+\end{summary}
+
+\subsection{BLOQUE V: Funciones de Procesamiento Avanzado}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 5: FUNCIONES DE PROCESAMIENTO AVANZADO
+def read_raster_multiband(path, band_index=None):
+    """
+    Lee raster con múltiples bandas
+    """
+    with rasterio.open(path) as src:
+        if band_index is not None:
+            # Leer banda específica
+            arr = src.read(band_index).astype(np.float32)
+        else:
+            # Leer todas las bandas
+            arr = src.read().astype(np.float32)
+        
+        meta = src.meta.copy()
+        nodata = src.nodata
+        
+        # Manejar valores nulos
+        if nodata is not None:
+            arr = np.where(arr == nodata, np.nan, arr)
+        
+        # Obtener nombres de bandas si están disponibles
+        band_names = []
+        if 'descriptions' in src.tags():
+            band_names = src.tags()['descriptions']
+        elif len(arr.shape) == 3:
+            band_names = [f'Band_{i+1}' for i in range(arr.shape[0])]
+        
+        return arr, meta, band_names, nodata
+
+def calculate_advanced_stats(arr, band_name="", percentiles=[1, 5, 10, 25, 50, 75, 90, 95, 99]):
+    """
+    Calcula estadísticas avanzadas para un array
+    """
+    flat = arr.flatten()
+    valid_mask = ~np.isnan(flat)
+    valid_data = flat[valid_mask]
+    
+    if valid_data.size == 0:
+        stats = {
+            "n_valid": 0,
+            "n_total": flat.size,
+            "pct_valid": 0.0
+        }
+        for p in percentiles:
+            stats[f'p{p}'] = np.nan
+        return stats
+    
+    # Estadísticas básicas
+    stats = {
+        "n_valid": valid_data.size,
+        "n_total": flat.size,
+        "pct_valid": (valid_data.size / flat.size) * 100,
+        "mean": np.mean(valid_data),
+        "median": np.median(valid_data),
+        "min": np.min(valid_data),
+        "max": np.max(valid_data),
+        "std": np.std(valid_data),
+        "var": np.var(valid_data),
+        "mad": np.mean(np.abs(valid_data - np.mean(valid_data))),  # Desviación absoluta media
+        "range": np.max(valid_data) - np.min(valid_data),
+        "iqr": np.percentile(valid_data, 75) - np.percentile(valid_data, 25)
+    }
+    
+    # Percentiles personalizados
+    for p in percentiles:
+        stats[f'p{p}'] = np.percentile(valid_data, p)
+    
+    # Estadísticas de forma
+    if valid_data.size > 1:
+        stats.update({
+            "skewness": skew(valid_data),
+            "kurtosis": kurtosis(valid_data),
+            "cv": (np.std(valid_data) / np.mean(valid_data)) * 100 if np.mean(valid_data) != 0 else np.nan,
+            "range_norm": (np.max(valid_data) - np.min(valid_data)) / np.mean(valid_data) if np.mean(valid_data) != 0 else np.nan,
+            "bias_mean_median": np.mean(valid_data) - np.median(valid_data)
+        })
+        
+        # Estadísticas robustas
+        q1 = np.percentile(valid_data, 25)
+        q3 = np.percentile(valid_data, 75)
+        stats.update({
+            "robust_mean": np.mean(valid_data[(valid_data >= q1) & (valid_data <= q3)]),
+            "robust_std": np.std(valid_data[(valid_data >= q1) & (valid_data <= q3)])
+        })
+    else:
+        for key in ["skewness", "kurtosis", "cv", "range_norm", "bias_mean_median", "robust_mean", "robust_std"]:
+            stats[key] = np.nan
+    
+    return stats
+
+def analyze_spatial_patterns(arr, resolution):
+    """
+    Analiza patrones espaciales básicos
+    """
+    if np.all(np.isnan(arr)):
+        return {
+            "homogeneity": np.nan,
+            "contrast": np.nan,
+            "entropy": np.nan,
+            "energy": np.nan
+        }
+    
+    # Métricas simples de textura
+    from scipy.ndimage import uniform_filter
+    
+    # Homogeneidad (inverso del contraste local)
+    local_std = uniform_filter(arr**2, size=3) - uniform_filter(arr, size=3)**2
+    local_std = np.sqrt(np.maximum(local_std, 0))
+    
+    mask = ~np.isnan(local_std)
+    if np.any(mask):
+        homogeneity = 1 / (1 + np.nanmean(local_std))
+        contrast = np.nanstd(arr) / (np.nanmean(arr) if np.nanmean(arr) != 0 else 1)
+    else:
+        homogeneity = np.nan
+        contrast = np.nan
+    
+    # Entropía y energía (simplificadas)
+    hist, bins = np.histogram(arr[~np.isnan(arr)], bins=32, density=True)
+    hist = hist[hist > 0]
+    
+    if len(hist) > 0:
+        entropy = -np.sum(hist * np.log2(hist))
+        energy = np.sum(hist**2)
+    else:
+        entropy = np.nan
+        energy = np.nan
+    
+    return {
+        "homogeneity": homogeneity,
+        "contrast": contrast,
+        "entropy": entropy,
+        "energy": energy
+    }
+
+def process_variable_file(file_path, variable, year, expected_bands=None):
+    """
+    Procesa un archivo TIFF para una variable específica
+    """
+    try:
+        # Leer el archivo
+        arr, meta, band_names, nodata = read_raster_multiband(file_path)
+        
+        # Determinar número de bandas
+        if len(arr.shape) == 2:
+            n_bands = 1
+            arr = arr[np.newaxis, :, :]  # Agregar dimensión de banda
+        else:
+            n_bands = arr.shape[0]
+        
+        # Usar nombres de bandas esperados o genéricos
+        if expected_bands and len(expected_bands) == n_bands:
+            actual_band_names = expected_bands
+        elif band_names and len(band_names) == n_bands:
+            actual_band_names = band_names
+        else:
+            actual_band_names = [f'Band_{i+1}' for i in range(n_bands)]
+        
+        records = []
+        
+        # Procesar cada banda por separado
+        for band_idx in range(n_bands):
+            band_data = arr[band_idx]
+            band_name = actual_band_names[band_idx]
+            
+            # Estadísticas básicas
+            stats = calculate_advanced_stats(band_data, band_name)
+            
+            # Patrones espaciales
+            spatial_stats = analyze_spatial_patterns(band_data, meta['transform'][0])
+            
+            # Crear registro
+            record = {
+                "year": year,
+                "variable": variable,
+                "band_name": band_name,
+                "band_index": band_idx + 1,
+                "file_name": os.path.basename(file_path),
+                "rows": meta['height'],
+                "cols": meta['width'],
+                "resolution": abs(meta['transform'][0]),
+                "crs": meta.get('crs', {}),
+                "nodata_value": nodata,
+                "file_size_mb": os.path.getsize(file_path) / (1024*1024)
+            }
+            
+            # Combinar estadísticas
+            record.update(stats)
+            record.update(spatial_stats)
+            
+            records.append(record)
+        
+        return records, n_bands
+        
+    except Exception as e:
+        print(f"    ❌ Error procesando {os.path.basename(file_path)}: {str(e)}")
+        return None, 0
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque define cuatro funciones especializadas que constituyen el núcleo analítico del procesador: \texttt{read\_raste\r\_multiband} para la lectura inteligente de archivos TIFF con manejo de valores nulos y metadatos, \texttt{calculate\_advanced\_stats} que calcula más de 20 métricas estadísticas incluyendo percentiles, asimetría, curtosis y medidas robustas, \texttt{analyze\_spatial\_patterns} que evalúa texturas espaciales como homogeneidad, contraste, entropía y energía, y \texttt{process\_variable\_file} que orquesta el procesamiento completo por banda, integrando estadísticas descriptivas, patrones espaciales y metadatos técnicos en registros estructurados para análisis posterior.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/T_com6.png}
+    \captionof{figure}{Compilación del Bloque V}
+\end{imagenbox}
+\end{figure}
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La función \texttt{read\_raster\_multiband} fue compilada correctamente, definiendo una rutina robusta para leer archivos raster multibanda mediante la librería \texttt{rasterio}, con capacidad para cargar bandas específicas o completas, convertir datos a precisión flotante de 32 bits, extraer metadatos técnicos, y manejar valores nulos mediante su transformación a \texttt{np.nan}, estableciendo así la base para el procesamiento estadístico posterior de las imágenes satelitales.
+\end{summary}
+
+
+\subsection{BLOQUE VI: Procesamiento Principal con Barra de Progreso}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 6: PROCESAMIENTO PRINCIPAL CON BARRA DE PROGRESO
+print("\n" + "=" * 70)
+print("INICIANDO PROCESAMIENTO DE IMÁGENES")
+print("=" * 70)
+
+all_records = []
+processed_count = 0
+error_count = 0
+
+# Configurar barra de progreso
+total_years = len(files_by_year)
+with tqdm(total=total_years, desc="Procesando años", unit="año") as pbar_years:
+    
+    for year, var_files in files_by_year.items():
+        year_records = []
+        print(f"\n�� AÑO {year}:")
+        
+        with tqdm(total=len(var_files), desc=f"Variables {year}", leave=False, unit="var") as pbar_vars:
+            for variable, file_path in var_files.items():
+                try:
+                    # Obtener bandas esperadas para esta variable
+                    expected_bands = BAND_NAMES.get(variable, None)
+                    
+                    # Procesar archivo
+                    records, n_bands = process_variable_file(
+                        file_path, variable, year, expected_bands
+                    )
+                    
+                    if records:
+                        year_records.extend(records)
+                        print(f"    ✅ {variable}: {n_bands} banda(s) procesada(s)")
+                        processed_count += 1
+                    else:
+                        print(f"    ⚠️  {variable}: Sin datos válidos")
+                        error_count += 1
+                    
+                except Exception as e:
+                    print(f"    ❌ {variable}: Error - {str(e)}")
+                    error_count += 1
+                
+                pbar_vars.update(1)
+        
+        # Agregar registros del año
+        if year_records:
+            all_records.extend(year_records)
+            print(f"    �� Total registros año {year}: {len(year_records)}")
+        
+        pbar_years.update(1)
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque implementa el núcleo de procesamiento principal con un sistema de doble barra de progreso que monitorea simultáneamente el avance por años y por variables, ejecutando de forma iterativa la función \texttt{process\_variable\_file} para cada combinación año-variable, manejando excepciones robustamente con contadores de éxitos (\texttt{✅}) y errores (\texttt{❌}), acumulando los registros estadísticos generados en una estructura consolidada, y proporcionando retroalimentación en tiempo real sobre el estado del procesamiento mediante indicadores visuales y mensajes detallados por cada año procesado.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com5.png}
+    \captionof{figure}{Compilación del Bloque VI}
+\end{imagenbox}
+\end{figure}
+
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+El procesamiento de imágenes se completó exitosamente a una velocidad de 26.19 años por segundo, analizando las 6 carpetas anuales (2020–2025) y procesando en cada una la variable temperatura, donde cada archivo \texttt{Temperatura\_AAAA\_completo.tif} contenía 1 banda (LST\_C), generando así 1 registro estadístico por año para un total de 6 registros que integran las métricas avanzadas y patrones espaciales calculados para la serie temporal completa.
+\end{summary}
+
+
+\subsection{BLOQUE VII: Creación de DataFrame y Organización de Datos}
+
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 7: CREACIÓN DE DATAFRAME Y EXPORTACIÓN
+print("\n" + "=" * 70)
+print("GENERANDO REPORTE ESTADÍSTICO")
+print("=" * 70)
+
+if not all_records:
+    print("⚠️  NO SE PROCESARON DATOS. Verifica:")
+    print("   1. Archivos TIFF existentes")
+    print("   2. Nombres de archivos correctos")
+    print("   3. Permisos en Google Drive")
+    exit()
+
+# Crear DataFrame principal
+df_main = pd.DataFrame(all_records)
+
+# Reordenar columnas
+base_cols = ['year', 'variable', 'band_name', 'band_index', 'file_name', 
+             'rows', 'cols', 'resolution', 'n_valid', 'n_total', 'pct_valid']
+stat_cols = [c for c in df_main.columns if c not in base_cols and c not in ['crs', 'nodata_value']]
+column_order = base_cols + sorted(stat_cols) + ['crs', 'nodata_value', 'file_size_mb']
+
+df_main = df_main[column_order]
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+El bloque genera el reporte estadístico principal validando primero la existencia de registros procesados, luego crea un \textbf{DataFrame estructurado} con todos los datos acumulados, y finalmente reorganiza las columnas en un orden lógico que prioriza metadatos básicos (año, variable, banda), seguido de estadísticas calculadas ordenadas alfabéticamente, y concluye con información técnica (sistema de referencia, valores nulos, tamaño de archivo), preparando así el conjunto de datos para su exportación final en formatos analíticos.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com7.png}
+    \captionof{figure}{Compilación del Bloque VII}
+\end{imagenbox}
+\end{figure}
+
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La ejecución del bloque generó exitosamente el reporte estadístico, confirmó que existen registros procesados disponibles, creó un \textbf{DataFrame estructurado} con todos los datos acumulados, y reorganizó las columnas en un orden lógico que separa metadatos básicos, estadísticas calculadas e información técnica, preparando así el conjunto de datos consolidado para su exportación final en formatos analíticos.
+\end{summary}
+
+\subsection{BLOQUE 8: Exportación Simplificada y Robusta a Excel}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 8: EXPORTACIÓN SIMPLIFICADA Y ROBUSTA
+excel_path = os.path.join(OUT_DIR, "Estadisticas_Satelitales_Completas.xlsx")
+print(f"\n�� Exportando a Excel: {excel_path}")
+
+try:
+    with pd.ExcelWriter(excel_path, engine='xlsxwriter') as writer:
+        # Hoja 1: Datos completos (SIEMPRE funciona)
+        df_main.to_excel(writer, sheet_name='DATOS_COMPLETOS', index=False)
+        print("   ✅ Hoja 1: DATOS_COMPLETOS creada")
+        
+        # Hoja 2: Resumen básico
+        try:
+            # Crear resumen simple
+            summary_data = []
+            for (year, variable), group in df_main.groupby(['year', 'variable']):
+                summary_record = {
+                    'year': year,
+                    'variable': variable,
+                    'num_bands': group['band_index'].nunique() if 'band_index' in group.columns else 1,
+                    'num_records': len(group)
+                }
+                
+                # Agregar métricas numéricas si existen
+                numeric_cols = group.select_dtypes(include=[np.number]).columns
+                for col in ['mean', 'median', 'pct_valid', 'n_valid']:
+                    if col in numeric_cols:
+                        summary_record[f'{col}_avg'] = group[col].mean()
+                        summary_record[f'{col}_std'] = group[col].std()
+                
+                summary_data.append(summary_record)
+            
+            if summary_data:
+                df_summary = pd.DataFrame(summary_data)
+                df_summary.to_excel(writer, sheet_name='RESUMEN_BASICO', index=False)
+                print("   ✅ Hoja 2: RESUMEN_BASICO creada")
+        except Exception as e:
+            print(f"   ⚠️  No se pudo crear hoja de resumen: {e}")
+        
+        # Hoja 3: Variables disponibles
+        try:
+            var_info = []
+            for variable in df_main['variable'].unique():
+                var_df = df_main[df_main['variable'] == variable]
+                var_info.append({
+                    'variable': variable,
+                    'years_available': len(var_df['year'].unique()),
+                    'years_list': ', '.join(map(str, sorted(var_df['year'].unique()))),
+                    'total_files': len(var_df['file_name'].unique()) if 'file_name' in var_df.columns else len(var_df),
+                    'has_bands': 'band_name' in var_df.columns,
+                    'num_bands': var_df['band_name'].nunique() if 'band_name' in var_df.columns else 1
+                })
+            
+            df_var_info = pd.DataFrame(var_info)
+            df_var_info.to_excel(writer, sheet_name='VARIABLES_INFO', index=False)
+            print("   ✅ Hoja 3: VARIABLES_INFO creada")
+        except Exception as e:
+            print(f"   ⚠️  No se pudo crear hoja de variables: {e}")
+        
+        # Hoja 4: Estadísticas descriptivas generales
+        try:
+            if not df_main.empty:
+                # Solo columnas numéricas
+                numeric_df = df_main.select_dtypes(include=[np.number])
+                if not numeric_df.empty:
+                    stats_df = numeric_df.describe().T
+                    stats_df.to_excel(writer, sheet_name='ESTAD_DESCRIPTIVAS')
+                    print("   ✅ Hoja 4: ESTAD_DESCRIPTIVAS creada")
+        except Exception as e:
+            print(f"   ⚠️  No se pudo crear hoja estadísticas: {e}")
+        
+        # Formatear la hoja principal
+        try:
+            workbook = writer.book
+            worksheet = writer.sheets['DATOS_COMPLETOS']
+            
+            # Formato para encabezados
+            header_format = workbook.add_format({
+                'bold': True,
+                'bg_color': '#4F81BD',
+                'font_color': 'white',
+                'border': 1,
+                'align': 'center',
+                'valign': 'vcenter'
+            })
+            
+            # Formato para números
+            number_format = workbook.add_format({'num_format': '0.0000'})
+            
+            # Aplicar formatos
+            for col_num, value in enumerate(df_main.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+                
+                # Determinar si es columna numérica
+                if df_main[value].dtype in [np.float64, np.float32, np.int64, np.int32]:
+                    col_letter = chr(65 + col_num) if col_num < 26 else 'A' + chr(65 + col_num - 26)
+                    worksheet.set_column(f'{col_letter}:{col_letter}', 15, number_format)
+                else:
+                    worksheet.set_column(col_num, col_num, 20)
+            
+            # Congelar paneles (fila de encabezado)
+            worksheet.freeze_panes(1, 0)
+            
+        except Exception as e:
+            print(f"   ⚠️  No se pudo aplicar formato: {e}")
+    
+    print(f"\n✅ Excel exportado exitosamente: {excel_path}")
+    print(f"   Tamaño del archivo: {os.path.getsize(excel_path) / 1024:.1f} KB")
+    
+except Exception as e:
+    print(f"\n❌ Error al exportar Excel: {e}")
+    # Exportar como CSV como respaldo
+    csv_path = os.path.join(OUT_DIR, "Estadisticas_Satelitales.csv")
+    df_main.to_csv(csv_path, index=False, encoding='utf-8')
+    print(f"✅ Datos exportados como CSV: {csv_path}")
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque implementa un sistema de exportación robusto que genera un archivo Excel profesional con múltiples hojas organizadas: \texttt{DATOS\_COMPLETOS} con todos los registros procesados, \texttt{RESUMEN\_BASICO} con estadísticas agrupadas por año y variable, \texttt{VARIABLES\_INFO} con metadatos de disponibilidad temporal, y \texttt{ESTAD\_DESCRIPTIVAS} con análisis descriptivos generales, aplicando además formato avanzado con encabezados coloreados, números decimales estandarizados y paneles congelados, e incluye un mecanismo de respaldo que exporta a CSV en caso de error, asegurando así la preservación de los datos procesados independientemente de contingencias técnicas.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com8.png}
+    \captionof{figure}{Compilación del Bloque VIII}
+\end{imagenbox}
+\end{figure}
+
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+La exportación se completó exitosamente generando el archivo \texttt{Estadísticas\_Satelitales\_Completas.xlsx} (13.8~KB) con sus cuatro hojas principales creadas correctamente, aunque se presentó una advertencia de formato debido a un error sintáctico en la verificación de tipos de datos (\texttt{'DataFrame' object has no attribute 'dtype'}), lo cual no impidió la generación final del documento Excel que contiene todos los datos procesados y estadísticas calculadas para la serie temporal 2020-2025.
+\end{summary}
+
+\subsection{BLOQUE 9: Reporte Final Detallado}
+\subsubsection{Código en Google Colab}
+\begin{lstlisting}[language=Python]
+# BLOQUE 9: REPORTE FINAL MEJORADO
+print("\n" + "=" * 70)
+print("REPORTE FINAL DETALLADO")
+print("=" * 70)
+
+print(f"\n�� METADATOS DEL PROCESAMIENTO:")
+print(f"   Fecha de procesamiento: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
+print(f"   Total de años encontrados: {len(files_by_year)}")
+print(f"   Años específicos: {sorted(files_by_year.keys())}")
+
+print(f"\n�� ESTADÍSTICAS DE DATOS:")
+print(f"   • Total de registros: {len(df_main):,}")
+print(f"   • Variables procesadas: {', '.join(sorted(df_main['variable'].unique()))}")
+print(f"   • Columnas en el dataset: {len(df_main.columns)}")
+
+if 'band_name' in df_main.columns:
+    unique_bands = df_main['band_name'].unique()
+    print(f"   • Bandas únicas encontradas: {len(unique_bands)}")
+    if len(unique_bands) <= 10:
+        print(f"   • Lista de bandas: {', '.join(unique_bands)}")
+
+print(f"\n�� INFORMACIÓN DE ARCHIVOS:")
+if 'file_name' in df_main.columns:
+    unique_files = df_main['file_name'].unique()
+    print(f"   • Archivos TIFF procesados: {len(unique_files)}")
+    print(f"   • Ejemplos de archivos:")
+    for file in unique_files[:3]:  # Mostrar solo 3 ejemplos
+        print(f"     - {file}")
+    if len(unique_files) > 3:
+        print(f"     ... y {len(unique_files) - 3} más")
+
+print(f"\n�� DISTRIBUCIÓN POR VARIABLE:")
+for variable in sorted(df_main['variable'].unique()):
+    var_df = df_main[df_main['variable'] == variable]
+    years = sorted(var_df['year'].unique())
+    
+    # Calcular estadísticas si hay datos numéricos
+    stats_info = ""
+    if 'mean' in var_df.columns:
+        stats_info = f" (media: {var_df['mean'].mean():.3f} ± {var_df['mean'].std():.3f})"
+    
+    print(f"   • {variable}:")
+    print(f"     - Años: {len(years)} {'año' if len(years)==1 else 'años'}")
+    print(f"     - Registros: {len(var_df)}")
+    if 'pct_valid' in var_df.columns:
+        print(f"     - Validez promedio: {var_df['pct_valid'].mean():.1f}%")
+    print(f"     - Periodo: {min(years)} - {max(years)}")
+
+print(f"\n�� ARCHIVO DE SALIDA:")
+print(f"   Nombre: Estadisticas_Satelitales_Completas.xlsx")
+print(f"   Ubicación: {OUT_DIR}")
+print(f"   Tamaño aproximado: {(len(df_main) * len(df_main.columns) * 8) / 1024:.1f} KB estimados")
+
+print(f"\n�� PARA VISUALIZAR LOS DATOS:")
+print(f"   1. Abre Google Drive: https://drive.google.com")
+print(f"   2. Navega a: MyDrive → RESULTADOS_ESTADISTICAS")
+print(f"   3. Descarga o abre el archivo Excel")
+print(f"   4. La hoja 'DATOS_COMPLETOS' contiene todos los datos")
+
+print(f"\n⚡ PROCESAMIENTO COMPLETADO EN:")
+end_time = pd.Timestamp.now()
+print(f"   Hora de finalización: {end_time.strftime('%H:%M:%S')}")
+
+print("\n" + "=" * 70)
+print("✅ ANÁLISIS SATELITAL COMPLETADO EXITOSAMENTE")
+print("=" * 70)
+\end{lstlisting}
+
+\begin{summary}{Interpretación}{cyan!50!blue}
+Este bloque genera un reporte ejecutivo detallado que sintetiza toda la información del procesamiento, incluyendo metadatos temporales (fecha de ejecución, años procesados), estadísticas de datos (total de registros, variables y columnas), información técnica (bandas únicas, archivos TIFF procesados), distribución por variable con métricas específicas como validez promedio y rango temporal, especificaciones del archivo de salida (nombre, ubicación, tamaño estimado), instrucciones de acceso para visualizar los resultados en Google Drive, y finalmente confirma la finalización exitosa del análisis satelital con la hora exacta de término, proporcionando así una documentación completa y autónoma del proceso ejecutado.
+\end{summary}
+
+\subsubsection{Resultados de la compilación:}
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/P_com9.png}
+    \captionof{figure}{Compilación del Bloque IX}
+\end{imagenbox}
+\end{figure}
+
+
+\begin{summary}{Interpretación de la compilación}{green!60!blue}
+El análisis satelital se completó exitosamente procesando 6 años (2020-2025) con 6 registros correspondientes exclusivamente a la variable \textbf{temperatura} (banda \texttt{LST\_C}), generando un dataset de 44 columnas con una validez promedio del \textbf{83.4\%}, exportando los resultados a un archivo Excel de \textbf{2.1~KB} ubicado en \texttt{RESULTADOS\_ESTADISTICAS}, y proporcionando instrucciones completas para acceder y visualizar los datos procesados, confirmando así la finalización integral del pipeline de análisis geoespacial multitemporal.
+\end{summary}

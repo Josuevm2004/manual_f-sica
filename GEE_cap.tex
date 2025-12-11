@@ -1,0 +1,117 @@
+\section{Metodologías de Descarga de Datos Satelitales}
+\section{Introducción a las plataformas de acceso}
+En este capítulo se detallan los procedimientos para acceder a las principales plataformas de datos satelitales, con especial énfasis en Google Earth Engine (GEE) debido a su capacidad de procesamiento en la nube y acceso a extensos catálogos de imágenes.
+
+\section{Acceso de cuenta en Google Earth Engine}
+
+\subsection{Requisitos previos}
+\begin{example}
+    Cuenta de Google válida\\
+    Acceso a internet estable\\
+    Navegador web actualizado (Chrome, Firefox, Edge)
+\end{example}
+
+\subsection{Proceso de registro en Google Cloud}
+
+\subsubsection{Paso 1: Acceso a Google Cloud Platform}
+\begin{example}
+    Abrir el navegador y dirigirse a: \\
+    \texttt{https://console.cloud.google.com/}\\
+    Iniciar sesión con la cuenta de Google que se utilizará para GEE\\
+    Completar el proceso de verificación de cuenta si es requerido
+\end{example}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/menu.png}
+    \captionof{figure}{Pantalla de acceso a Google Cloud Console}
+\end{imagenbox}
+\end{figure}
+
+\subsection{Creación de proyecto en Google Cloud}
+
+\subsubsection{Paso 2: Crear nuevo proyecto}
+En la parte superior izquierda, hacer clic en el menú desplegable de proyectos.
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/paso2.0.png}
+    \captionof{figure}{Selector de proyectos en Google Cloud Console.}
+\end{imagenbox}
+\end{figure}
+
+    \begin{example}
+    Completar los campos requeridos: 
+    \begin{itemize}
+        \item \textbf{Nombre del proyecto}: Ejemplo: \textit{Proyecto-GEE-Teledeteccion}.
+        \item \textbf{Organización}: Opcional, puede dejarse sin seleccionar.
+        \item \textbf{Ubicación}: Predeterminada o según preferencia.
+    \end{itemize}
+    Hacer clic en \textbf{Crear} y esperar la confirmación. 
+    \end{example}
+    
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/confirmacion.png}
+    \captionof{figure}{Confirmación de creación de un nuevo proyecto en Google Cloud.}
+\end{imagenbox}
+\end{figure}
+
+
+\subsection{Activación de API de Google Earth Engine}
+
+\subsubsection{Paso 4: Habilitar Earth Engine API}
+\begin{example}
+    Con el proyecto recién creado seleccionado \\
+    Dirigirse a: \\ \texttt{https://console.cloud.google.com/apis/library/earthengine.googleapis.com} \\
+    Hacer clic en el botón "Habilitar" \\ 
+    Esperar la activación (puede tomar algunos segundos) \\
+    Verificar que el estado muestre: API habilitada
+\end{example}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{resources/API.png}
+    \captionof{figure}{Activación de Earth Engine API}
+\end{imagenbox}
+\end{figure}
+
+\subsection{Registro final en Earth Engine}
+
+\subsubsection{Paso 5: Completar registro en GEE}
+
+\begin{example}
+    Dirigirse a: \texttt{https://earthengine.google.com/} \\
+    Hacer clic en "Get Started" \\
+    Seleccionar ''Comenzar'' en el apartado ''Consulta si cumples con los requisitos para el uso no comercial'' \\
+    Completar el formulario de registro:
+    \begin{itemize}
+        \item \textbf{Selecciona el tipo de organización}
+        \item \textbf{Verifica la elegibilidad para uso no comercial}
+        \item \textbf{Elige tu plan}
+        \item \textbf{Describe tu trabajo}
+        \item \textbf{Review summary}
+    \end{itemize}
+    Por último, le das a ''Registrarse''
+\end{example}
+
+\section{Verificación de acceso}
+
+\subsection{Confirmación de cuenta activa}
+\begin{example}
+    Una vez aprobada la cuenta, acceder a: \texttt{https://code.earthengine.google.com/} \\
+    Eliges la opción ''I'M AUTHORIZED FOR AN EXISTING CLOUD PROJECT''\\
+    Seleccionas el proyecto creado anteriormente ''proyecto-gee-teledeteccion'' y presionas ''SELECT''
+\end{example}
+
+\begin{summary}{Resumen del capítulo}{purple!40!blue}
+Este capítulo detalla la metodología paso a paso para la obtención de datos satelitales a través de la plataforma \textbf{Google Earth Engine (GEE)}. Se cubren los requisitos previos y el proceso completo de registro, que incluye la creación de un proyecto en \textbf{Google Cloud Platform (GCP)}, la activación de la \textbf{Earth Engine API}, y la finalización del formulario de registro en GEE para uso no comercial. El objetivo es asegurar una cuenta funcional para el posterior procesamiento y análisis de imágenes a gran escala.
+\end{summary}

@@ -1,0 +1,292 @@
+\subsubsection{Procesamiento y Análisis}
+\begin{resolution}
+En esta sección se describen las técnicas utilizadas para procesar y analizar las imágenes satelitales obtenidas de los sensores Landsat~5, 7, 8 y 9, con el propósito de estimar la temperatura superficial del Lago Titicaca. El procesamiento incluye el cálculo de índices espectrales, la clasificación temática, el análisis mediante series temporales y la detección de cambios térmicos.
+\end{resolution}
+
+\begin{example}
+\textbf{Índices espectrales (NDVI, NDWI y LST)}\\
+\label{subsec:indices-espectrales}
+Los índices espectrales permiten resaltar y cuantificar propiedades biofísicas de la superficie. En el estudio del Lago Titicaca son fundamentales para separar agua, estimar emisividad y calcular la temperatura superficial.
+
+NDVI: Índice de Vegetación de Diferencia Normalizada\\
+\label{subsubsec:ndvi}
+
+El NDVI se obtiene combinando las bandas \emph{near infrared} (NIR) y \emph{red} (RED). Su función en este proyecto es identificar la vegetación circundante al lago y estimar la emisividad superficial cuando se trabaja con áreas terrestres.
+
+\begin{equation}
+    NDVI = \frac{NIR - RED}{NIR + RED}
+\end{equation}
+
+En las imágenes Landsat utilizadas se emplean las siguientes combinaciones:
+
+\begin{itemize}
+    \item Landsat 5 y 7: NIR = banda 4, RED = banda 3.
+    \item Landsat 8 y 9: NIR = banda 5, RED = banda 4.
+\end{itemize}
+NDWI y MNDWI: Índices de agua\\
+\label{subsubsec:ndwi-mndwi}
+
+El NDWI y el MNDWI se utilizan para resaltar cuerpos de agua y diferenciar el lago de las zonas adyacentes. En particular, el MNDWI suele ser más eficiente en áreas con suelo húmedo o zonas urbanas, por lo que se recomienda su uso en este estudio.
+
+El NDWI propuesto por McFeeters se define como
+
+\begin{equation}
+    NDWI = \frac{GREEN - NIR}{GREEN + NIR},
+\end{equation}
+
+mientras que el MNDWI propuesto por Xu se expresa como
+
+\begin{equation}
+    MNDWI = \frac{GREEN - SWIR1}{GREEN + SWIR1}.
+\end{equation}
+
+La Figura 2.51 ilustra el resultado del MNDWI aplicado sobre una imagen Landsat de la zona de estudio, donde el espejo de agua del lago se observa claramente realzado frente al resto de coberturas.
+\end{example}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{FOTOS/F1.jpg}
+    \captionof{figure}{Mapa MNDWI del Lago Titicaca (Landsat 8), donde el cuerpo de agua se observa realzado respecto al entorno.}
+\end{imagenbox}
+\end{figure}
+
+\begin{example}
+LST: Temperatura superficial\\
+\label{subsubsec:lst}
+
+La temperatura superficial de la Tierra (LST, por sus siglas en inglés) es el producto principal del proyecto y se calcula a partir de las bandas térmicas de los sensores Landsat:
+
+\begin{itemize}
+    \item Landsat 5 y 7: banda 6.
+    \item Landsat 8 y 9: banda 10 (TIRS1).
+\end{itemize}
+
+El flujo de trabajo general incluye cuatro pasos:
+
+\begin{enumerate}
+    \item Conversión de números digitales (DN) a radiancia espectral.
+    \item Conversión de radiancia a temperatura de brillo $T_b$.
+    \item Estimación de la emisividad superficial $\varepsilon$.
+    \item Cálculo de la LST en Kelvin y posterior conversión a grados Celsius.
+\end{enumerate}
+
+La LST puede expresarse como
+
+\begin{equation}
+    LST = \frac{T_b}{1 + \left( \frac{\lambda \, T_b}{\rho} \right) \ln(\varepsilon)},
+\end{equation}
+
+donde $\lambda$ es la longitud de onda efectiva de la banda térmica, $\rho$ es una constante ($\rho \approx 1.438 \times 10^{-2}\,\mathrm{m\,K}$) y $\varepsilon$ es la emisividad superficial. Finalmente, la conversión a grados Celsius se realiza mediante
+
+\begin{equation}
+    T\left({^\circ C}\right) = LST - 273.15.
+\end{equation}
+En el caso del Lago Titicaca, al tratarse de un cuerpo de agua profundo, se suele asumir una emisividad aproximada de $\varepsilon \approx 0.98$.
+La Figura 2.52 presenta un ejemplo de mapa de temperatura superficial obtenido a partir de una imagen Landsat 9.
+\end{example}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{FOTOS/F2.jpg}
+    \captionof{figure}{Mapa de temperatura superficial (LST) del Lago Titicaca expresada en \(^\circ\)C (ejemplo con Landsat 9).}
+\end{imagenbox}
+\end{figure}
+
+\subsubsection{Clasificación}
+\label{subsec:clasificacion}
+
+\begin{resolution}
+La clasificación temática consiste en asignar una etiqueta o clase a cada píxel de la imagen satelital, basándose en su respuesta espectral. Este proceso permite distinguir categorías como agua, vegetación, zonas urbanas, suelo desnudo o áreas con características térmicas específicas. En este trabajo se emplean dos metodologías ampliamente utilizadas: la clasificación no supervisada y la clasificación supervisada.
+\end{resolution}
+
+\begin{example}
+\textbf{Clasificación no supervisada}\\
+\label{subsubsec:clasificacion-no-supervisada}
+
+La clasificación no supervisada agrupa los píxeles automáticamente según su similitud espectral, sin requerir entrenamiento previo ni muestras definidas por el usuario. El algoritmo más utilizado es \emph{K-means}, que busca dividir los datos en un número $k$ de clústeres mediante un proceso iterativo de minimización de la distancia entre los píxeles y los centroides de cada grupo.
+
+El algoritmo K-means sigue el siguiente procedimiento:
+
+\begin{enumerate}
+    \item Se selecciona un número inicial de clases o clústeres $k$.
+    \item Se asignan los píxeles a los clústeres en función de la distancia euclidiana entre su vector espectral y los centroides.
+    \item Los centroides se recalculan como la media espectral de los píxeles asignados.
+    \item El proceso se repite hasta que la variación entre iteraciones es mínima.
+\end{enumerate}
+
+La distancia espectral utilizada por K-means se expresa matemáticamente como:
+
+\[
+d(\mathbf{x}, \mathbf{\mu_k}) = \sqrt{\sum_{i=1}^{n}(x_i - \mu_{k,i})^2}
+\]
+
+donde:
+\begin{itemize}
+    \item $\mathbf{x}$ es el vector espectral del píxel,
+    \item $\mathbf{\mu_k}$ es el centroide del clúster $k$,
+    \item $n$ es el número de bandas espectrales utilizadas.
+\end{itemize}
+
+Para el análisis del Lago Titicaca, se recomienda trabajar con entre cinco y siete clases ($k = 5$ o $k = 7$), de modo que al menos una clase se corresponda claramente con el cuerpo de agua (caracterizado por valores bajos de reflectancia en bandas del visible e infrarrojo cercano). Esta clasificación inicial permite delimitar el lago, detectar zonas costeras y obtener una primera separación entre tipos de cobertura sin intervención del analista.
+\end{example}
+
+\begin{example}
+\textbf{Clasificación supervisada}
+\label{subsubsec:clasificacion-supervisada}
+
+A diferencia del enfoque no supervisado, la clasificación supervisada requiere la selección previa de muestras de entrenamiento (\emph{training samples}), donde el usuario define regiones representativas de cada clase de interés: agua, vegetación, suelo desnudo, áreas urbanas o cualquier categoría relevante para el análisis térmico.
+
+A partir de estas muestras se construyen modelos de clasificación basados en algoritmos estadísticos o de aprendizaje automático. Entre los más empleados se encuentran:
+
+\begin{itemize}
+    \item \textbf{Random Forest (RF)}: ensamblado de múltiples árboles de decisión. Ofrece alta precisión y buena generalización incluso con pocas muestras.
+    \item \textbf{Support Vector Machines (SVM)}: maximiza la separación entre clases mediante hiperplanos óptimos.
+    \item \textbf{Maximum Likelihood Classification (MLC)}: asume que los datos siguen una distribución normal multivariante y calcula la probabilidad de pertenencia a cada clase.
+\end{itemize}
+
+El clasificador Random Forest, por ejemplo, define múltiples árboles de decisión $T_1, T_2, \ldots, T_n$, y la clase final asignada a un píxel es aquella con mayor votación:
+
+\[
+\hat{y} = \text{mode}\left( T_1(\mathbf{x}),\, T_2(\mathbf{x}), \dots,\, T_n(\mathbf{x}) \right)
+\]
+
+donde $\mathbf{x}$ es el vector de características espectrales del píxel (bandas ópticas, índices como NDVI, NDWI, MNDWI, etc.).
+
+El uso de índices derivados es especialmente útil para mejorar la clasificación en áreas acuáticas, ya que:
+
+\begin{itemize}
+    \item NDVI permite separar vegetación de suelo.
+    \item MNDWI resalta áreas de agua frente a suelo húmedo o urbano.
+    \item LST puede aportar información térmica adicional para diferenciar zonas cálidas o frías.
+\end{itemize}
+
+La clasificación supervisada ofrece resultados más precisos que la no supervisada, especialmente cuando el analista define correctamente las muestras representativas. En el contexto del Lago Titicaca, este método permite diferenciar de manera precisa el agua del lago, la vegetación circundante, suelos desnudos y áreas urbanas, lo cual es fundamental para interpretar patrones térmicos y su relación con el entorno.
+\end{example}
+
+
+
+\begin{platform}
+\begin{center}
+\caption{Comparación entre clasificación no supervisada y supervisada aplicada a imágenes satelitales del Lago Titicaca.}
+\label{tab:comparacion-clasificacion}
+\begin{tabular}{p{0.25\textwidth} p{0.35\textwidth} p{0.35\textwidth}}
+\textbf{Criterio} & \textbf{Clasificación no supervisada} & \textbf{Clasificación supervisada} \\
+\hline
+
+\textbf{Necesidad de muestras} &
+No requiere muestras de entrenamiento; los algoritmos agrupan los píxeles automáticamente. &
+Requiere muestras de alta calidad definidas por el analista para cada clase. \\ 
+
+\textbf{Algoritmos típicos} &
+K-means, ISODATA. &
+Random Forest, SVM, Maximum Likelihood. \\
+
+\textbf{Ventajas} &
+\begin{itemize}
+    \item Rápida y fácil de aplicar.
+    \item Útil cuando no existen datos previos.
+    \item Permite explorar patrones espectrales desconocidos.
+\end{itemize}
+&
+\begin{itemize}
+    \item Mayor precisión y control del resultado.
+    \item Capaz de incorporar índices y múltiples variables.
+    \item Reproduce de forma consistente las clases definidas.
+\end{itemize} \\
+
+\textbf{Desventajas} &
+\begin{itemize}
+    \item Las clases no siempre representan categorías reales.
+    \item Menor precisión.
+    \item Sensible al número inicial de clústeres.
+\end{itemize}
+&
+\begin{itemize}
+    \item Requiere conocimiento experto del área de estudio.
+    \item Depende de la calidad y representatividad de las muestras.
+    \item Puede sobreajustarse si se elige mal el modelo.
+\end{itemize} \\
+
+\textbf{Aplicación al Lago Titicaca} &
+Útil para separar agua del entorno terrestre y obtener una primera segmentación general del área. &
+Permite identificar con precisión agua, suelos, vegetación y áreas urbanas, facilitando el análisis térmico y ambiental. \\
+
+\textbf{Exactitud esperada} &
+Media -- depende del número de clústeres y de la variabilidad espectral. &
+Alta -- si las muestras se seleccionan correctamente y el algoritmo está bien calibrado. \\
+\hline
+\end{tabular}
+\end{center}
+\end{platform}
+
+\subsubsection{Series temporales}
+\label{subsec:series-temporales}
+\begin{resolution}
+El análisis de series temporales permite estudiar la variación de la temperatura superficial del Lago Titicaca a lo largo de varios años o décadas. Este enfoque es especialmente útil para identificar tendencias de calentamiento o enfriamiento del agua, variabilidad interanual, efectos estacionales y posibles anomalías asociadas a fenómenos climáticos o cambios ambientales. Para construir una serie temporal confiable es necesario trabajar con imágenes Landsat históricas, que ofrecen una continuidad de más de 40 años con resoluciones espaciales y radiométricas comparables. Entre los sensores disponibles se consideran:
+
+\begin{itemize}
+    \item \textbf{Landsat 5 TM} (1984--2011): primera fuente estable para análisis de temperatura por su banda térmica B6.
+    \item \textbf{Landsat 7 ETM+} (desde 1999): incluye una banda térmica mejorada, aunque con la limitación del ``scan line corrector'' a partir de 2003.
+    \item \textbf{Landsat 8 OLI/TIRS} (desde 2013): mejora sustancial en la estimación de LST mediante la banda térmica B10.
+    \item \textbf{Landsat 9 OLI-2/TIRS-2} (desde 2021): sensor más reciente y compatible con Landsat 8, ideal para continuidad de series.
+\end{itemize}
+\end{resolution}
+
+\begin{resolution}
+Para evitar sesgos asociados a la estacionalidad, es recomendable seleccionar imágenes correspondientes a la misma época del año, preferentemente durante la estación seca (junio--septiembre), donde la cobertura nubosa es menor y la temperatura del lago presenta una variabilidad más estable. De cada imagen seleccionada se calcula la temperatura superficial (LST) y su valor medio dentro de la región definida (ya sea el lago completo o sectores como norte, centro y sur).
+
+El valor promedio de LST por fecha se obtiene aplicando un reductor estadístico:
+
+\[
+\overline{LST}(t) = \frac{1}{N} \sum_{i=1}^{N} LST_i(t)
+\]
+
+donde $N$ es el número de píxeles dentro del área seleccionada y $t$ representa la fecha de adquisición de la imagen. Este procedimiento se repite para cada una de las fechas disponibles, generando así una serie temporal del tipo:
+
+\[
+\{ (t_1, \overline{LST_1}),\; (t_2, \overline{LST_2}),\; \ldots,\; (t_n, \overline{LST_n}) \}
+\]
+\end{resolution}
+
+\begin{resolution}
+En un análisis más avanzado es posible separar el lago en zonas específicas (por ejemplo, norte, centro y sur). Esta división permite estudiar variaciones espaciales dentro del propio lago, asociadas a diferencias de profundidad, circulación del agua, entradas fluviales o procesos atmosféricos localizados.
+
+Adicionalmente, la combinación de series de Landsat 5, 7, 8 y 9 requiere una harmonización mínima, ya que cada sensor tiene calibraciones ligeramente diferentes. Sin embargo, la versión Collection~2 Level~2 de Landsat proporciona productos térmicos consistentes, lo que facilita el uso conjunto de todos los sensores sin necesidad de correcciones adicionales.
+
+Al construir la serie temporal se pueden identificar patrones como:
+
+\begin{itemize}
+    \item Tendencias de calentamiento o enfriamiento a largo plazo.
+    \item Oscilaciones interanuales asociadas al ciclo hidrológico del altiplano.
+    \item Anomalías térmicas relacionadas con fenómenos como El Niño o La Niña.
+    \item Variaciones diferenciales entre sectores del lago.
+\end{itemize}
+
+Este tipo de análisis es fundamental para comprender la dinámica térmica del lago, evaluar el impacto de cambios ambientales y proyectar escenarios futuros bajo condiciones climáticas variables.
+\end{resolution}
+
+\subsubsection{Detección de cambios}
+
+\begin{resolution}
+\label{subsec:deteccion-cambios}
+La detección de cambios permite identificar y cuantificar variaciones térmicas o territoriales entre dos o más fechas de observación. En el marco de este trabajo, el análisis se centra principalmente en los cambios en la temperatura superficial del Lago Titicaca y en la posible variación de la extensión del cuerpo de agua.
+Una forma sencilla de evaluar cambios térmicos es calcular la diferencia de temperatura superficial entre dos fechas $t_1$ y $t_2$:
+\begin{equation}
+    \Delta LST = LST_{t_2} - LST_{t_1}.
+\end{equation}
+Valores positivos de $\Delta LST$ indican un aumento de temperatura, mientras que valores negativos representan un enfriamiento de la superficie.
+La Figura 2.53 presenta un ejemplo de mapa de cambios térmicos, donde se resaltan las zonas del lago que han experimentado incrementos o disminuciones significativos de temperatura entre dos imágenes Landsat separadas en el tiempo.
+\end{resolution}
+
+\begin{figure}[H]
+\centering
+\begin{imagenbox}
+    \centering
+    \includegraphics[width=0.85\linewidth]{FOTOS/F3.jpg}
+    \captionof{figure}{Mapa de detección de cambios térmicos ($\Delta LST$) en el Lago Titicaca entre dos fechas de observación. Los tonos cálidos indican aumento de temperatura y los tonos fríos indican enfriamiento.}
+\end{imagenbox}
+\end{figure}
